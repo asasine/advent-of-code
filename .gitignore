@@ -2,3 +2,4 @@
 **/data/output/
 
 session.key
+__pycache__

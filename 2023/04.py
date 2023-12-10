@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from functools import lru_cache
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -101,21 +102,29 @@ def part_one(scratchcards: Iterable[Scratchcard]):
 
 
 def part_two(scratchcards: List[Scratchcard]):
-    """Calculates the number of scratchcards using the rules of part two."""
+    """
+    Calculates the number of scratchcards using the rules of part two.
+
+    If a scratchcard has N winners, the next N scratchcards are copied, recursively. This process repeats until the end
+    of the list of scratchcards is reached, and cards never make a copiy past the end of the list.
+    """
     # yield items in scratchcards, repeating the next N elements in scratchcards whenever a scratchcard has N winners
-    # TODO: this could be optimized by caching the results of self_and_copies but it's fast enough as-is and Iterators don't cache well
-    def self_and_copies(i: int, scratchcard: Scratchcard) -> Iterator[Scratchcard]:
-        yield scratchcard
-        # if the scratchcard has N winners, yield the next N scratchcards recursively (copies can yield copies)
-        for j in range(i + 1, i + 1 + scratchcard.number_of_winners):
-            yield from self_and_copies(j, scratchcards[j])
+    @lru_cache(maxsize=len(scratchcards))
+    def count_self_and_copies(i: int) -> int:
+        scratchcard = scratchcards[i]
+        # the last scratchcard is always 1, because there's nothing after it to copy
+        if i == len(scratchcards) - 1:
+            return 1
 
-    def all_self_and_copies() -> Iterator[Scratchcard]:
-        for i, scratchcard in enumerate(scratchcards):
-            yield from self_and_copies(i, scratchcard)
+        start_j = i + 1
 
-    info_console.print(
-        f"Number of scratchcards: {ilen(all_self_and_copies())}")
+        # don't go past the end of the list
+        end_j = min(len(scratchcards), start_j + scratchcard.number_of_winners)
+        return 1 + sum(count_self_and_copies(j) for j in range(start_j, end_j))
+
+    count = sum(count_self_and_copies(i) for i in range(len(scratchcards)))
+    info_console.print(f"Number of scratchcards: {count}")
+    info_console.print(f"Cache statistics: {count_self_and_copies.cache_info()}")
 
 
 def main():

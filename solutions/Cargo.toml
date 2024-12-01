@@ -1,0 +1,8 @@
+[package]
+name = "solutions"
+version = "0.1.0"
+edition = "2021"
+description = "Solutions to the Advent of Code"
+
+[dependencies]
+regex = "1.11.1"

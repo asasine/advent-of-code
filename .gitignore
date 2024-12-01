@@ -1,5 +1,12 @@
+# Advent of Code data
 **/data/input/
 **/data/output/
+inputs/
 
 session.key
+
+# Python
 __pycache__
+
+# Rust
+/target

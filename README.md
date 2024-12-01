@@ -16,9 +16,10 @@ Implementations to solve Advent of Code puzzles https://adventofcode.com/
 
 ### Daily
 
-1. `aoc d -o -I -i ./solutions/src/year{year}/inputs/{day}.txt`
-1. Create a new module for the day's puzzle in `src/lib/year{year}/day{day}.rs`
+1. `aoc d -o -I -i ./solutions/src/year{year}/inputs/{day:02}.txt`
+1. Create a new module for the day's puzzle in `src/lib/year{year}/day{day:02}.rs`
 1. Add public functions `part1` and `part2` to the module.
+1. Add markdown descriptions for the puzzles: `aoc r -w 120 -P -m`. This will require some cleanup (multiline code blocks, links, etc.)
 1. Publicly export the functions in the `year{year}` module.
 1. Change `src/main.rs` to run the new puzzle.
 1. Print the solutions to stdout.

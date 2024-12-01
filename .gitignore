@@ -2,6 +2,7 @@
 **/data/input/
 **/data/output/
 inputs/
+!inputs/examples
 
 session.key
 

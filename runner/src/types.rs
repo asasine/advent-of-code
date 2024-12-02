@@ -96,3 +96,26 @@ impl<T: TimeZone> From<DateTime<T>> for Day {
         Self(dt.day() as u8)
     }
 }
+
+pub struct YearDay {
+    pub year: Year,
+    pub day: Day,
+}
+
+impl From<NaiveDate> for YearDay {
+    fn from(d: NaiveDate) -> Self {
+        Self {
+            year: d.into(),
+            day: d.into(),
+        }
+    }
+}
+
+impl From<NaiveDateTime> for YearDay {
+    fn from(dt: NaiveDateTime) -> Self {
+        Self {
+            year: dt.into(),
+            day: dt.into(),
+        }
+    }
+}

@@ -1,10 +1,11 @@
+use std::path::PathBuf;
 use std::process::{ExitCode, ExitStatus};
 
-use clap::error::ErrorKind;
-use clap::{CommandFactory, Parser, Subcommand};
+use clap::error::{ContextKind, ContextValue, ErrorKind};
+use clap::{Args, CommandFactory, Parser, Subcommand};
 
 use crate::is_aoc_event_for;
-use crate::types::{Day, Year};
+use crate::types::{Day, Year, YearDay};
 
 fn exit_code_from_status(stauts: ExitStatus) -> ExitCode {
     if stauts.success() {
@@ -26,36 +27,31 @@ pub struct Cli {
 pub enum Command {
     /// Run an Advent of Code solution. This is the default subcommand.
     Run(RunArgs),
+
+    /// Scaffold a new Advent of Code solution for a single day.
+    Daily(DailyArgs),
 }
 
 impl Default for Command {
     fn default() -> Self {
-        Self::Run(RunArgs {
-            year: None,
-            day: None,
-            debug: false,
-        })
+        Self::Run(RunArgs::default())
     }
 }
 
-#[derive(clap::Args, Default)]
-pub struct RunArgs {
-    /// The year of the challenge to run.
+#[derive(Args, Default)]
+struct YearDayArgs {
+    /// The year of the challenge.
     ///
     /// This is required if the current date is not during the Advent of Code event.
     year: Option<Year>,
 
-    /// The day of the challenge to run.
+    /// The day of the challenge.
     ///
     /// This is required if the current date is not during the Advent of Code event.
     day: Option<Day>,
-
-    /// Whether to run the solution in debug mode.
-    #[clap(short, long, default_value_t = false)]
-    debug: bool,
 }
 
-impl RunArgs {
+impl YearDayArgs {
     pub fn year(&self) -> Result<Year, &str> {
         self.year.map_or_else(|| {
             let now = chrono::Local::now();
@@ -78,7 +74,7 @@ impl RunArgs {
         }, Ok)
     }
 
-    pub fn run(&self) -> Result<ExitCode, clap::Error> {
+    fn validate(&self) -> Result<YearDay, clap::Error> {
         let year = self
             .year()
             .map_err(|e| Cli::command().error(ErrorKind::MissingRequiredArgument, e))?;
@@ -87,6 +83,23 @@ impl RunArgs {
             .day()
             .map_err(|e| Cli::command().error(ErrorKind::MissingRequiredArgument, e))?;
 
+        Ok(YearDay { year, day })
+    }
+}
+
+#[derive(Args, Default)]
+pub struct RunArgs {
+    #[clap(flatten)]
+    yd: YearDayArgs,
+
+    /// Whether to run the solution in debug mode.
+    #[clap(short, long, default_value_t = false)]
+    debug: bool,
+}
+
+impl RunArgs {
+    pub fn run(self) -> Result<ExitCode, clap::Error> {
+        let YearDay { year, day } = self.yd.validate()?;
         eprintln!("Running year {}, day {}...", year, day);
         let mut command = std::process::Command::new("cargo");
         command.arg("run");
@@ -105,12 +118,112 @@ impl RunArgs {
     }
 }
 
+#[derive(clap::Args, Default)]
+pub struct DailyArgs {
+    #[clap(flatten)]
+    yd: YearDayArgs,
+
+    /// The file to write the output to.
+    ///
+    /// If not provided, the destination will be automatically derived from the year and day.
+    destination: Option<PathBuf>,
+
+    /// Whether to overwrite the output file if it already exists.
+    #[clap(short, long, default_value_t = false)]
+    force: bool,
+}
+
+impl DailyArgs {
+    fn contents(yd: &YearDay) -> String {
+        let doc = format!("Day {}", yd.day);
+        let real_input_include_str = format!("../../data/real/{}/{:02}.txt", yd.year, yd.day);
+        let example_input_include_str =
+            format!("../../data/examples/{}/{:02}/1.txt", yd.year, yd.day);
+
+        format!(
+            r#"//! {doc}
+
+fn part1(input: &str) -> usize {{
+    0
+}}
+
+fn part2(input: &str) -> usize {{
+    0
+}}
+
+fn main() {{
+    let input = include_str!("{real_input_include_str}");
+    println!("{{}}", part1(input));
+    println!("{{}}", part2(input));
+}}
+
+#[cfg(test)]
+mod tests {{
+    use super::*;
+
+    #[test]
+    fn part1_example() {{
+        let input = include_str!("{example_input_include_str}");
+        assert_eq!(0, part1(input));
+    }}
+
+    #[test]
+    fn part2_example() {{
+        let input = include_str!("{example_input_include_str}");
+        assert_eq!(0, part2(input));
+    }}
+}}
+"#
+        )
+    }
+
+    pub fn run(self) -> Result<ExitCode, clap::Error> {
+        let yd = self.yd.validate()?;
+        eprintln!("Scaffolding for year {}, day {}...", yd.year, yd.day);
+
+        let destination = self.destination.unwrap_or_else(|| {
+            let mut path = PathBuf::new();
+            path.push("solutions");
+            path.push("src");
+            path.push("bin");
+            path.push(format!("year{}-day{:02}.rs", yd.year, yd.day));
+            path
+        });
+
+        if destination.exists() && !self.force {
+            let mut error = Cli::command().error(
+                ErrorKind::ValueValidation,
+                format!(
+                    "a solution already exists for year {}, day {}: {}. Did you mean to use --force or provide a date?",
+                    yd.year,
+                    yd.day,
+                    destination.display()
+                ),
+            );
+
+            // NOTE: context isn't printed to the user by default, so it's also included i nthe error message above
+            error.insert(
+                ContextKind::SuggestedArg,
+                ContextValue::String("use --overwrite to overwrite the existing file".into()),
+            );
+
+            return Err(error);
+        }
+
+        let contents = Self::contents(&yd);
+        std::fs::write(&destination, contents)
+            .map_err(|e| Cli::command().error(ErrorKind::Io, e))?;
+
+        Ok(ExitCode::SUCCESS)
+    }
+}
+
 impl Cli {
     pub fn run(self) -> ExitCode {
-        let command = &self.command.unwrap_or_else(|| Command::default());
-
+        let command = self.command.unwrap_or_else(|| Command::default());
         match command {
             Command::Run(args) => args.run(),
+            Command::Daily(args) => args.run(),
         }
         .unwrap_or_else(|e| e.exit())
     }

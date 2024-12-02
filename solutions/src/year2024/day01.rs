@@ -147,13 +147,13 @@ mod tests {
 
     #[test]
     fn part1_example() {
-        let input = include_str!("inputs/examples/01/1.txt");
+        let input = include_str!("../../data/examples/2024/01/1.txt");
         assert_eq!(part1(input), 11);
     }
 
     #[test]
     fn part2_example() {
-        let input = include_str!("inputs/examples/01/1.txt");
+        let input = include_str!("../../data/examples/2024/01/1.txt");
         assert_eq!(part2(input), 31);
     }
 }

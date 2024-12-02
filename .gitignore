@@ -1,9 +1,4 @@
-# Advent of Code data
-**/data/input/
-**/data/output/
-inputs/
-!inputs/examples
-
+# Advent of Code credentials
 session.key
 
 # Python

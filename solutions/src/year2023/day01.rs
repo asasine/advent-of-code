@@ -128,12 +128,12 @@ mod tests {
 
     #[test]
     fn example() {
-        let input = include_str!("inputs/examples/01/1.txt");
+        let input = include_str!("../../data/examples/2023/01/1.txt");
         let part1 = part1(input);
         eprintln!("part1: {}", part1);
         assert_eq!(part1, 142);
 
-        let input = include_str!("inputs/examples/01/2.txt");
+        let input = include_str!("../../data/examples/2023/01/2.txt");
         let part2 = part2(input);
         eprintln!("part2: {}", part2);
         assert_eq!(part2, 281);

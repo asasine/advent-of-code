@@ -161,7 +161,7 @@ fn aoc_solution_impl(attr: pm2::TokenStream, item: pm2::TokenStream) -> pm2::Tok
 ///
 /// ```
 /// # mod solutions {
-/// #     pub mod year2023 {
+/// #     pub mod year2024 {
 /// #         pub mod day01 {
 /// #             pub fn part1(_s: &str) -> usize {
 /// #                 0
@@ -173,7 +173,7 @@ fn aoc_solution_impl(attr: pm2::TokenStream, item: pm2::TokenStream) -> pm2::Tok
 /// #         }
 /// #     }
 /// # }
-/// aoc_macro::aoc_main!(year2023, day1);
+/// aoc_macro::aoc_main!(year2024, day1);
 /// ```
 #[proc_macro]
 pub fn aoc_main(input: pm::TokenStream) -> pm::TokenStream {
@@ -188,7 +188,7 @@ fn aoc_main_impl(input: pm2::TokenStream) -> pm2::TokenStream {
 
     let year_prefixed = format!("year{}", yd.year.0);
     let day_prefixed = format!("day{:02}", yd.day.0);
-    let include_str_path = format!("year{}/inputs/{:02}.txt", yd.year.0, yd.day.0);
+    let include_str_path = format!("../data/real/{}/{:02}.txt", yd.year.0, yd.day.0);
 
     fn make_path_expr(segments: &[&str]) -> syn::ExprPath {
         syn::ExprPath {
@@ -294,7 +294,7 @@ mod tests {
 
         let expected = quote! {
             fn main() {
-                let input = include_str!("year2024/inputs/01.txt");
+                let input = include_str!("../data/real/2024/01.txt");
                 println!("{}", solutions::year2024::day01::part1(input));
                 println!("{}", solutions::year2024::day01::part2(input));
             }

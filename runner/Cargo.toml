@@ -1,0 +1,10 @@
+[package]
+name = "runner"
+version = "0.1.0"
+edition = "2021"
+description = "A runner for Advent of Code solutions"
+default-run = "runner"
+
+[dependencies]
+chrono = "0.4.38"
+clap = { version = "4.5.21", features = ["derive"] }

@@ -3,10 +3,7 @@ name = "solutions"
 version = "0.1.0"
 edition = "2021"
 description = "Solutions to the Advent of Code"
-default-run = "runner"
 
 [dependencies]
 aoc-macro = { version = "*", path = "../aoc-macro" }
-chrono = "0.4.38"
-clap = { version = "4.5.21", features = ["derive"] }
 regex = "1.11.1"

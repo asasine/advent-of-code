@@ -11,15 +11,11 @@ Implementations to solve Advent of Code puzzles https://adventofcode.com/
 ### Yearly
 
 1. Get the session token from the browser's cookies and put it into the `~/.config/adventofcode.session` file.
-1. Create a new module for the year in `src/lib/year{year}/mod.rs`
-1. Publicly export the year's modules in `src/lib.rs`
+1. `mkdir -vp ./solutions/data/{real,examples}/$(date +%Y)`
 
 ### Daily
 
-1. `aoc d -o -I -i ./solutions/src/year{year}/inputs/{day:02}.txt`
-1. Create a new module for the day's puzzle in `src/lib/year{year}/day{day:02}.rs`
-1. Add public functions `part1` and `part2` to the module.
-1. Add markdown descriptions for the puzzles: `aoc r -w 120 -P -m`. This will require some cleanup (multiline code blocks, links, etc.)
-1. Publicly export the functions in the `year{year}` module.
-1. Change `src/main.rs` to run the new puzzle.
-1. Print the solutions to stdout.
+1. `aoc d -o -I -i ./solutions/data/real/$(date +%Y)/$(date +%d).txt`
+1. Create a new binary for the day's puzzle in `src/bin/year${year}-day${day:02}.rs`.
+1. Add markdown descriptions for the puzzles: `aoc r -w 120 -P -m`. This may require some cleanup (multiline code blocks, links, etc.)
+1. `cargo run -q`

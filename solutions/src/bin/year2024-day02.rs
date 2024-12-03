@@ -138,11 +138,7 @@ fn is_safe_problem_dampener_naive(levels: &[usize]) -> bool {
     false
 }
 
-fn main() {
-    let input = include_str!("../../data/real/2024/02.txt");
-    println!("{}", part1(input));
-    println!("{}", part2(input));
-}
+aoc_macro::aoc_main!();
 
 #[cfg(test)]
 mod tests {

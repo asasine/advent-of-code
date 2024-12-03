@@ -122,11 +122,7 @@ pub fn part2(input: &str) -> usize {
         .sum()
 }
 
-fn main() {
-    let input = include_str!("../../data/real/2023/01.txt");
-    println!("{}", part1(input));
-    println!("{}", part2(input));
-}
+aoc_macro::aoc_main!();
 
 #[cfg(test)]
 mod tests {

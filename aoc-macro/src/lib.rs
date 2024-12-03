@@ -4,7 +4,6 @@ use std::str::FromStr;
 
 use proc_macro as pm;
 use proc_macro2 as pm2;
-use quote::format_ident;
 use quote::quote;
 use quote::ToTokens;
 use syn::parse::{Parse, ParseStream};
@@ -157,66 +156,27 @@ fn aoc_solution_impl(attr: pm2::TokenStream, item: pm2::TokenStream) -> pm2::Tok
     solution.to_token_stream()
 }
 
-/// Generates a main function to run a specific Advent of Code solution.
+/// Generates a main function to an Advent of Code solution with input from stdin.
+///
+/// The implementation automatically calls functions `part1` and `part2` with the input read from stdin. It assumes
+/// they have the signature `fn foo(input: &str) -> usize`.
 ///
 /// ```
-/// # mod solutions {
-/// #     pub mod year2024 {
-/// #         pub mod day01 {
-/// #             pub fn part1(_s: &str) -> usize {
-/// #                 0
-/// #             }
-/// #
-/// #             pub fn part2(_s: &str) -> usize {
-/// #                 0
-/// #             }
-/// #         }
-/// #     }
-/// # }
-/// aoc_macro::aoc_main!(year2024, day1);
+/// # mod solutions { pub fn read_stdin() -> String { String::new() } }
+/// # fn part1(input: &str) -> usize { 0 }
+/// # fn part2(input: &str) -> usize { 0 }
+/// aoc_macro::aoc_main!();
 /// ```
 #[proc_macro]
-pub fn aoc_main(input: pm::TokenStream) -> pm::TokenStream {
-    aoc_main_impl(input.into()).into()
-}
-
-fn aoc_main_impl(input: pm2::TokenStream) -> pm2::TokenStream {
-    let yd = match syn::parse2::<YearDay>(input) {
-        Ok(yd) => yd,
-        Err(e) => return e.to_compile_error(),
-    };
-
-    let year_prefixed = format!("year{}", yd.year.0);
-    let day_prefixed = format!("day{:02}", yd.day.0);
-    let include_str_path = format!("../data/real/{}/{:02}.txt", yd.year.0, yd.day.0);
-
-    fn make_path_expr(segments: &[&str]) -> syn::ExprPath {
-        syn::ExprPath {
-            attrs: Vec::new(),
-            qself: None,
-            path: syn::Path {
-                leading_colon: None,
-                segments: segments
-                    .iter()
-                    .map(|s| syn::PathSegment {
-                        ident: format_ident!("{}", s),
-                        arguments: syn::PathArguments::None,
-                    })
-                    .collect(),
-            },
-        }
-    }
-
-    let part1_expr = make_path_expr(&["solutions", &year_prefixed, &day_prefixed, "part1"]);
-    let part2_expr = make_path_expr(&["solutions", &year_prefixed, &day_prefixed, "part2"]);
-
+pub fn aoc_main(_input: pm::TokenStream) -> pm::TokenStream {
     quote! {
         fn main() {
-            let input = include_str!(#include_str_path);
-            println!("{}", #part1_expr(input));
-            println!("{}", #part2_expr(input));
+            let input = solutions::read_stdin();
+            println!("{}", part1(&input));
+            println!("{}", part2(&input));
         }
     }
+    .into()
 }
 
 #[cfg(test)]
@@ -284,22 +244,5 @@ mod tests {
         };
 
         assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn aoc_main_macro() {
-        let actual = aoc_main_impl(quote! {
-            year2024, day01
-        });
-
-        let expected = quote! {
-            fn main() {
-                let input = include_str!("../data/real/2024/01.txt");
-                println!("{}", solutions::year2024::day01::part1(input));
-                println!("{}", solutions::year2024::day01::part2(input));
-            }
-        };
-
-        assert_eq!(expected.to_string(), actual.to_string());
     }
 }

@@ -1,5 +1,7 @@
 //! Day 2: Red-Nosed Reports
 
+use itertools::Itertools;
+
 /// Fortunately, the first location The Historians want to search isn't a long walk from the Chief Historian's office.
 ///
 /// While the [Red-Nosed Reindeer nuclear fusion/fission plant][1] appears to contain no sign of the Chief Historian, the
@@ -53,7 +55,7 @@ pub fn part1(input: &str) -> usize {
                 .map(|level| level.parse::<usize>().unwrap())
                 .collect::<Vec<_>>()
         })
-        .filter(|levels| is_safe(levels))
+        .filter(|levels| is_safe(levels.iter()))
         .count()
 }
 
@@ -63,19 +65,19 @@ enum Direction {
     Decreasing,
 }
 
-fn is_safe(levels: &[usize]) -> bool {
+fn is_safe<'a>(levels: impl Iterator<Item = &'a usize>) -> bool {
     // check if all levels are increasing or decreasing
     let mut direction_cmp = None;
     levels
-        .windows(2)
-        .map(|w| {
-            let direction = if w[0] < w[1] {
+        .tuple_windows()
+        .map(|(l, r)| {
+            let direction = if l < r {
                 Direction::Increasing
             } else {
                 Direction::Decreasing
             };
 
-            let delta = w[1].abs_diff(w[0]);
+            let delta = r.abs_diff(*l);
             (direction, delta)
         })
         .all(|(direction, delta)| {
@@ -119,18 +121,18 @@ pub fn part2(input: &str) -> usize {
 
 fn is_safe_problem_dampener_naive(levels: &[usize]) -> bool {
     // naive solution: remove each element in turn and check if the remainder is safe
-    if is_safe(levels) {
+    if is_safe(levels.iter()) {
         return true;
     }
 
     for i in 0..levels.len() {
-        let remainder = levels
-            .iter()
-            .enumerate()
-            .filter_map(|(j, &level)| if i == j { None } else { Some(level) })
-            .collect::<Vec<_>>();
+        let remainder =
+            levels
+                .iter()
+                .enumerate()
+                .filter_map(|(j, level)| if i == j { None } else { Some(level) });
 
-        if is_safe(&remainder) {
+        if is_safe(remainder) {
             return true;
         }
     }

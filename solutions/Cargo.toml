@@ -6,4 +6,5 @@ description = "Solutions to the Advent of Code"
 
 [dependencies]
 aoc-macro = { version = "*", path = "../aoc-macro" }
+itertools = "0.13.0"
 regex = "1.11.1"

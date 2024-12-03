@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
 
+import sys
 from functools import lru_cache
 import re
 from dataclasses import dataclass
-from pathlib import Path
 from typing import FrozenSet, Iterable, Iterator, List, Optional
-from more_itertools import ilen
 from rich.console import Console
 
-current_file = Path(__file__).absolute()
-problem_number = current_file.stem
 info_console = Console(stderr=True)
 
 
@@ -81,27 +78,22 @@ class Scratchcard:
 
 
 def get_input(example: bool = False) -> Iterator[Scratchcard]:
-    data_file = current_file.parent / "data" / "input"
-    if example:
-        data_file /= "example"
+    for line in sys.stdin:
+        line = line.rstrip()
+        if len(line) == 0:
+            continue
 
-    data_file /= f"{problem_number}.txt"
-
-    with data_file.open() as f:
-        for line in f:
-            line = line.rstrip()
-            if len(line) == 0:
-                continue
-
-            yield Scratchcard.from_line(line)
+        yield Scratchcard.from_line(line)
 
 
-def part_one(scratchcards: Iterable[Scratchcard]):
+def part_one(scratchcards: Iterable[Scratchcard]) -> int:
     """Calculates the sum of scores of the scratchcards."""
-    info_console.print(f"Sum of scores: {sum(scratchcard.part_one_score for scratchcard in scratchcards)}")
+    result = sum(scratchcard.part_one_score for scratchcard in scratchcards)
+    info_console.print(f"Sum of scores: {result}")
+    return result
 
 
-def part_two(scratchcards: List[Scratchcard]):
+def part_two(scratchcards: List[Scratchcard]) -> int:
     """
     Calculates the number of scratchcards using the rules of part two.
 
@@ -125,12 +117,13 @@ def part_two(scratchcards: List[Scratchcard]):
     count = sum(count_self_and_copies(i) for i in range(len(scratchcards)))
     info_console.print(f"Number of scratchcards: {count}")
     info_console.print(f"Cache statistics: {count_self_and_copies.cache_info()}")
+    return count
 
 
 def main():
     scratchcards = list(get_input())
-    part_one(scratchcards)
-    part_two(scratchcards)
+    print(part_one(scratchcards))
+    print(part_two(scratchcards))
 
 
 if __name__ == "__main__":

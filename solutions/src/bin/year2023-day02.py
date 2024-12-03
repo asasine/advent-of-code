@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 
+import sys
 import operator
 import re
 from dataclasses import dataclass
 from functools import partial, reduce
-from pathlib import Path
 from typing import Dict, Iterator, List
 from rich.console import Console
 
-current_file = Path(__file__).absolute()
 info_console = Console(stderr=True)
 
 game_pattern = re.compile(r"^Game (\d+):")
@@ -105,13 +104,11 @@ class Game:
 
 
 def get_input() -> Iterator[Game]:
-    data_file = current_file.parent / "data" / "input" / "02.txt"
-    with open(data_file, "r") as file:
-        for line in file:
-            if len(line.strip()) == 0:
-                continue
+    for line in sys.stdin:
+        if len(line.strip()) == 0:
+            continue
 
-            yield Game.from_line(line)
+        yield Game.from_line(line)
 
 
 def part_one(games: List[Game]):
@@ -119,18 +116,20 @@ def part_one(games: List[Game]):
     possible_games = filter(is_possible, games)
     sum_of_game_numbers = sum(game.number for game in possible_games)
     info_console.print(f"Sum of possible game numbers: {sum_of_game_numbers}")
+    return sum_of_game_numbers
 
 
 def part_two(games: List[Game]):
     powers = map(Game.power, games)
     sum_of_powers = sum(powers)
     info_console.print(f"Sum of powers: {sum_of_powers}")
+    return sum_of_powers
 
 
 def main():
     games = list(get_input())
-    part_one(games)
-    part_two(games)
+    print(part_one(games))
+    print(part_two(games))
 
 
 if __name__ == "__main__":

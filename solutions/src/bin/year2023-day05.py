@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 
+import sys
 from dataclasses import dataclass
-from pathlib import Path
 import re
-from typing import Optional
+from typing import List, Optional
 from rich.console import Console
 
-current_file = Path(__file__).absolute()
-problem_number = current_file.stem
 info_console = Console(stderr=True)
 
 map_beginning_pattern = re.compile(r"^(?P<source>\w+)-to-(?P<destination>\w+) map:$")
@@ -39,7 +37,7 @@ class Range:
 class CategoryMap:
     source: str
     destination: str
-    ranges: list[Range]
+    ranges: List[Range]
 
     def source_to_destination(self, source_number: int) -> int:
         """Maps a source number to a destination number."""
@@ -53,10 +51,10 @@ class CategoryMap:
 
 @dataclass
 class Problem:
-    seeds: list[int]
+    seeds: List[int]
     """The seeds."""
 
-    maps: list[CategoryMap]
+    maps: List[CategoryMap]
     """The maps from source categories to destination categories."""
 
     def get_location_number(self, seed: int) -> int:
@@ -78,6 +76,7 @@ def part_one(problem: Problem):
     """Solve part one of the problem."""
     lowest_location_number = min(problem.get_location_number(seed) for seed in problem.seeds)
     info_console.print(f"Lowest location number: {lowest_location_number}")
+    return lowest_location_number
 
 
 def part_two(problem: Problem):
@@ -88,42 +87,36 @@ def part_two(problem: Problem):
 
 
 def get_input(example: bool = False):
-    data_file = current_file.parent / "data" / "input"
-    if example:
-        data_file /= "example"
-
-    data_file /= f"{problem_number}.txt"
     problem = Problem([], [])
-    with data_file.open() as f:
-        seeds_line = f.readline().strip()
-        for i, line in enumerate(f):
-            line = line.strip()
-            if i == 0:
-                seeds_line = seeds_line.lstrip("seeds: ")
-                seeds = [int(seed) for seed in seeds_line.split(" ")]
-                info_console.log(f"Seeds: {seeds}")
-                problem.seeds = seeds
-                continue
+    seeds_line = sys.stdin.readline().strip()
+    for i, line in enumerate(sys.stdin):
+        line = line.strip()
+        if i == 0:
+            seeds_line = seeds_line.lstrip("seeds: ")
+            seeds = [int(seed) for seed in seeds_line.split(" ")]
+            info_console.log(f"Seeds: {seeds}")
+            problem.seeds = seeds
+            continue
 
-            if not line:
-                continue
+        if not line:
+            continue
 
-            match = map_beginning_pattern.match(line)
-            if match:
-                source = match.group("source")
-                destination = match.group("destination")
-                info_console.log(f"Map source {source} to destination {destination}:")
-                problem.maps.append(CategoryMap(source, destination, []))
-                continue
-            else:
-                ranges = line.split(" ")
-                if len(ranges) != 3:
-                    raise ValueError(f"Invalid line, expected 3 numbers: {line}")
+        match = map_beginning_pattern.match(line)
+        if match:
+            source = match.group("source")
+            destination = match.group("destination")
+            info_console.log(f"Map source {source} to destination {destination}:")
+            problem.maps.append(CategoryMap(source, destination, []))
+            continue
+        else:
+            ranges = line.split(" ")
+            if len(ranges) != 3:
+                raise ValueError(f"Invalid line, expected 3 numbers: {line}")
 
-                problem.maps[-1].ranges.append(Range(destination_start=int(ranges[0]),
-                                               source_start=int(ranges[1]), length=int(ranges[2])))
+            problem.maps[-1].ranges.append(Range(destination_start=int(ranges[0]),
+                                            source_start=int(ranges[1]), length=int(ranges[2])))
 
-            info_console.log(line)
+        info_console.log(line)
 
     return problem
 
@@ -131,7 +124,8 @@ def get_input(example: bool = False):
 def main():
     problem = get_input()
     info_console.print(problem)
-    part_one(problem)
+    print(part_one(problem))
+    print(part_two(problem))
 
 
 if __name__ == "__main__":

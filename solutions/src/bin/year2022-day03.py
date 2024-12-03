@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
+import sys
 from more_itertools import ichunked
-from pathlib import Path
-from typing import Iterable, List, Set
+from typing import Iterable, List
 from rich.console import Console
 
 info_console = Console(stderr=True)
-current_file = Path(__file__).absolute()
 
 class Rucksack:
     def __init__(self, contents: str):
@@ -22,7 +21,7 @@ class Rucksack:
     def get_item_priority(cls, item: str) -> int:
         """
         Returns the priority of an item.
-        
+
         Args:
             item: a single character representing an item
 
@@ -43,8 +42,7 @@ class Rucksack:
         return sum(Rucksack.get_item_priority(item) for item in self.compartment_1 & self.compartment_2)
 
 def read_input() -> List[Rucksack]:
-    with (current_file.parent / "data" / "input" / "03.txt").open() as f:
-        return list(map(Rucksack, filter(None, map(str.strip, f.readlines()))))
+    return list(map(Rucksack, filter(None, map(str.strip, sys.stdin.readlines()))))
 
 def part_1(rucksacks: Iterable[Rucksack]) -> int:
     """Returns the sum of the item priorities of the items shared between the two compartments of each rucksack."""
@@ -54,7 +52,7 @@ def part_1(rucksacks: Iterable[Rucksack]) -> int:
             raise ValueError(f"Expected exactly one shared element, got {shared_element}")
 
         return Rucksack.get_item_priority(shared_element.pop())
-    
+
     return sum(map(get_rucksack_score, rucksacks))
 
 def part_2(rucksacks: Iterable[Rucksack]) -> int:
@@ -72,8 +70,8 @@ def main():
     rucksacks = read_input()
     info_console.print(f"Read {len(rucksacks)} rucksacks")
 
-    info_console.print(f"Part 1: {part_1(rucksacks)}")
-    info_console.print(f"Part 2: {part_2(rucksacks)}")
+    print(part_1(rucksacks))
+    print(part_2(rucksacks))
 
 if __name__ == "__main__":
     main()

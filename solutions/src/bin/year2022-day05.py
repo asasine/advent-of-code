@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
+import sys
 from itertools import takewhile
 from more_itertools import windowed
-from pathlib import Path
 import re
-from rich import print
+from rich.console import Console
 import rich.repr
 from typing import Iterable, List, Optional, Tuple
 
-current_file = Path(__file__).absolute()
+info_console = Console(stderr=True)
 
 @rich.repr.auto
 class Stack:
@@ -56,34 +56,34 @@ def read_input() -> Tuple[List[Stack], List[Command]]:
         line = line.strip()
         return len(line) > 0 and line[0].isdigit()
 
-    with (current_file.parent / "data" / "input" / "05.txt").open() as f:
-        stacks = []
-        stacks_rows = takewhile(lambda line: not is_stack_id_line(line), f)
-        stacks_rows = list(stacks_rows)
-        for line in reversed(stacks_rows):
-            row = line.rstrip()
-            for i, crate in enumerate(windowed(row, 3, step=4)):
-                while len(stacks) < i + 1:
-                    stacks.append([])
-                
-                if crate[1] != " ":
-                    stacks[i].append(crate[1])
+    lines = sys.stdin.readlines()
+    stacks = []
+    stacks_rows = takewhile(lambda line: not is_stack_id_line(line), lines)
+    stacks_rows = list(stacks_rows)
+    for line in reversed(stacks_rows):
+        row = line.rstrip()
+        for i, crate in enumerate(windowed(row, 3, step=4)):
+            while len(stacks) < i + 1:
+                stacks.append([])
 
-        stacks = list(map(lambda p: Stack(p[0] + 1, p[1]), enumerate(stacks)))
+            if crate[1] != " ":
+                stacks[i].append(crate[1])
 
-        move_pattern = re.compile(r"move (?P<n>\d+) from (?P<source>\d+) to (?P<destination>\d+)")
-        def create_command(line: str) -> Optional[Command]:
-            m = move_pattern.match(line)
-            if m is None:
-                return None
+    stacks = list(map(lambda p: Stack(p[0] + 1, p[1]), enumerate(stacks)))
 
-            source_id = int(m.group("source"))
-            destination_id = int(m.group("destination"))
-            n = int(m.group("n"))
-            return Command(source_id=source_id, destination_id=destination_id, n=n)
+    move_pattern = re.compile(r"move (?P<n>\d+) from (?P<source>\d+) to (?P<destination>\d+)")
+    def create_command(line: str) -> Optional[Command]:
+        m = move_pattern.match(line)
+        if m is None:
+            return None
 
-        commands = list(filter(None, map(create_command, filter(None, f.readlines()))))
-        return (stacks, commands)
+        source_id = int(m.group("source"))
+        destination_id = int(m.group("destination"))
+        n = int(m.group("n"))
+        return Command(source_id=source_id, destination_id=destination_id, n=n)
+
+    commands = list(filter(None, map(create_command, filter(None, lines))))
+    return (stacks, commands)
 
 def top_of_stacks(stacks: List[Stack]) -> str:
     return "".join(map(lambda stack: stack.crates[-1], stacks))
@@ -103,15 +103,15 @@ def part_2(stacks: List[Stack], commands: List[Command]) -> str:
 def main():
     stacks, commands = read_input()
 
-    print("Initial stacks:")
+    info_console.print("Initial stacks:")
     for stack in stacks:
-        print(stack)
+        info_console.print(stack)
 
-    print()
-    print(f"Loaded {len(commands)} commands")
+    info_console.print()
+    info_console.print(f"Loaded {len(commands)} commands")
 
-    print(f"[bold blue]Part 1[/bold blue]: {part_1(list(map(Stack.copy, stacks)), commands)}")
-    print(f"[bold blue]Part 1[/bold blue]: {part_2(list(map(Stack.copy, stacks)), commands)}")
+    print(part_1(list(map(Stack.copy, stacks)), commands))
+    print(part_2(list(map(Stack.copy, stacks)), commands))
 
 if __name__ == "__main__":
     main()

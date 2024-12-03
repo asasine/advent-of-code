@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
-from typing import List
-from pathlib import Path
-from rich.console import Console
+import sys
 
-current_file = Path(__file__).absolute()
+from typing import List
+from rich.console import Console
 
 info_console = Console(stderr=True)
 
@@ -31,13 +30,12 @@ def read_input() -> List[Elf]:
 
     add_new_elf()
 
-    with (current_file.parent / "data" / "input" / "01.txt").open("r") as f:
-        for line in f:
-            if line.strip() == "":
-                add_new_elf()
-            else:
-                calories = int(line.strip())
-                elves[-1].add_food(calories)
+    for line in sys.stdin:
+        if line.strip() == "":
+            add_new_elf()
+        else:
+            calories = int(line.strip())
+            elves[-1].add_food(calories)
 
     return elves
 
@@ -52,6 +50,12 @@ def main():
 
     top_three_calories = sum(elf.total_calories for elf in elves[:3])
     info_console.print(f"The top three elves are carrying {top_three_calories} of food")
+
+    # part 1: top elf
+    print(elves[0].total_calories)
+
+    # part 2: top three elves
+    print(top_three_calories)
 
 
 if __name__ == "__main__":

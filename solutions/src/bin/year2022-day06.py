@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 
+import sys
 from typing import Optional
 from more_itertools import windowed, first_true, all_unique
-from pathlib import Path
-from rich import print
+from rich.console import Console
 
-current_file = Path(__file__).absolute()
+info_console = Console(stderr=True)
 
 def read_input() -> str:
-    with (current_file.parent / "data" / "input" / "06.txt").open() as f:
-        return f.readline().strip()
+    return sys.stdin.readline().strip()
 
 def find_marker(data: str, n: int) -> Optional[int]:
     result = first_true(enumerate(windowed(data, n)), pred=lambda window: all_unique(window[1]))
@@ -34,13 +33,15 @@ def part_2(data: str) -> int:
 
 def main():
     data = read_input()
-    print(f"Read {len(data)} characters")
+    info_console.print(f"Read {len(data)} characters")
 
     part_1_index = part_1(data)
-    print(f"[bold blue]Part 1[/bold blue]: Index {part_1_index}: marker={data[part_1_index - 4 : part_1_index]}")
+    info_console.log(f"[bold blue]Part 1[/bold blue]: Index {part_1_index}: marker={data[part_1_index - 4 : part_1_index]}")
+    print(part_1_index)
 
     part_2_index = part_2(data)
-    print(f"[bold blue]Part 2[/bold blue]: Index {part_2_index}: marker={data[part_2_index - 14 : part_2_index]}")
+    info_console.log(f"[bold blue]Part 2[/bold blue]: Index {part_2_index}: marker={data[part_2_index - 14 : part_2_index]}")
+    print(part_2_index)
 
 if __name__ == "__main__":
     main()

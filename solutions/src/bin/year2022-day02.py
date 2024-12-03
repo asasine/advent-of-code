@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 
+import sys
 from collections import namedtuple
-from enum import Enum, auto
-from pathlib import Path
+from enum import Enum
 from typing import Iterable, Iterator, List
 from rich.console import Console
-
-current_file = Path(__file__).absolute()
 
 class Outcome(Enum):
     LOSE = 0
@@ -104,16 +102,15 @@ info_console = Console(stderr=True)
 Game = namedtuple("Game", ["opponent", "me_shape", "me_desired_outcome"])
 
 def read_input() -> List[Game]:
-    with (current_file.parent / "data" / "input" / "02.txt").open() as f:
-        def create_game(line: str) -> Game:
-            opponent, me = line.split()
-            return Game(
-                Shape.from_character(opponent),
-                Shape.from_character(me),
-                Outcome.from_character(me),
-            )
+    def create_game(line: str) -> Game:
+        opponent, me = line.split()
+        return Game(
+            Shape.from_character(opponent),
+            Shape.from_character(me),
+            Outcome.from_character(me),
+        )
 
-        return [create_game(line) for line in f if line.strip() != ""]
+    return [create_game(line) for line in sys.stdin if line.strip() != ""]
 
 def get_part_1_scores(games: Iterable[Game]) -> Iterator[int]:
     return (game.me_shape.score(game.opponent) for game in games)
@@ -129,8 +126,8 @@ def main():
     games = read_input()
     info_console.print(f"Read {len(games)} games")
 
-    info_console.print(f"Total score (part 1): {sum(get_part_1_scores(games))}")
-    info_console.print(f"Total score (part 2): {sum(get_part_2_scores(games))}")
+    print(sum(get_part_1_scores(games)))
+    print(sum(get_part_2_scores(games)))
 
 if __name__ == "__main__":
     main()

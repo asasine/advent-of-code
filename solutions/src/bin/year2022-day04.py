@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
+import sys
 from more_itertools import quantify
-from pathlib import Path
 from typing import Iterable, List
 from rich.console import Console
 
 info_console = Console(stderr=True)
-current_file = Path(__file__).absolute()
 
 class Assignment:
     def __init__(self, low: int, high: int):
@@ -41,8 +40,7 @@ def read_input() -> List[Pair]:
         b_low, b_high = map(int, b.split("-"))
         return Pair(Assignment(a_low, a_high), Assignment(b_low, b_high))
 
-    with (current_file.parent / "data" / "input" / "04.txt").open() as f:
-        return list(map(factory, filter(None, map(str.strip, f.readlines()))))
+    return list(map(factory, filter(None, map(str.strip, sys.stdin.readlines()))))
 
 def part_1(pairs: Iterable[Pair]) -> int:
     """Returns the number of pairs where one assignment is a superset of the other"""
@@ -55,8 +53,8 @@ def part_2(pairs: Iterable[Pair]) -> int:
 def main():
     pairs = read_input()
     info_console.print(f"Read {len(pairs)} pairs")
-    info_console.print(f"Part 1: {part_1(pairs)}")
-    info_console.print(f"Part 2: {part_2(pairs)}")
+    print(part_1(pairs))
+    print(part_2(pairs))
 
 if __name__ == "__main__":
     main()

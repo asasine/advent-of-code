@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
+import sys
 import re
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Iterator, Optional, Union
+from typing import Iterator, Optional
 from rich.console import Console
 
-current_file = Path(__file__).absolute()
 info_console = Console(stderr=True)
 
 # https://stackoverflow.com/a/5616910/1472764
@@ -73,23 +72,23 @@ class CalibrationValue:
 
 
 def read_input() -> Iterator[CalibrationValue]:
-    data_file = current_file.parent / "data" / "input" / "01.txt"
-    with data_file.open("r") as f:
-        for line in f:
-            if line.strip() == "":
-                continue
+    for line in sys.stdin:
+        if line.strip() == "":
+            continue
 
-            calibration_value = CalibrationValue.from_line(line)
-            if calibration_value is None:
-                continue
+        calibration_value = CalibrationValue.from_line(line)
+        if calibration_value is None:
+            continue
 
-            yield calibration_value
+        yield calibration_value
 
 
 def main():
     calbiration_values = list(read_input())
     info_console.print(f"Read {len(calbiration_values)} calibration values")
-    info_console.print(f"Sum of all values: {sum(value.value for value in calbiration_values)}")
+    s = sum(value.value for value in calbiration_values)
+    info_console.print(f"Sum of all values: {s}")
+    print(s)
 
 
 

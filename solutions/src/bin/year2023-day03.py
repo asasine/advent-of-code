@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
 
-import math
-import operator
+import sys
 import re
 from dataclasses import dataclass
 from functools import lru_cache
 from more_itertools import windowed
 from itertools import chain
-from pathlib import Path
-from typing import Dict, Iterator, List, Set, Tuple
+from typing import Dict, Iterator, Set
 from rich.console import Console
 
-current_file = Path(__file__).absolute()
 info_console = Console(stderr=True)
 
 pattern = re.compile(r"(?P<number>\d+)|(?P<symbol>[^.])")
@@ -119,59 +116,56 @@ class Adjacencies:
 
 
 def get_input(example: bool = False) -> Adjacencies:
-    data_file = current_file.parent / "data" / "input"
-    if example:
-        data_file /= "example"
-
-    data_file /= "03.txt"
-
     symbol_to_part_numbers: Dict[Symbol, Set[PartNumber]] = {}
     part_number_to_symbols: Dict[PartNumber, Set[Symbol]] = {}
-    with open(data_file, "r") as file:
-        # read the file in windows of 3 lines, where the middle line is the one we're inspecting for part numbers
-        # and all three lines are searched for symbols
-        for row, window in enumerate(windowed(chain([""], file, [""]), 3)):
-            line_0, line_1, line_2 = window
-            if line_0 is None or line_1 is None or line_2 is None:
-                raise ValueError(f"Invalid window: line_0={line_0}, line_1={line_1}, line_2={line_2}")
+    # read the file in windows of 3 lines, where the middle line is the one we're inspecting for part numbers
+    # and all three lines are searched for symbols
+    for row, window in enumerate(windowed(chain([""], sys.stdin, [""]), 3)):
+        line_0, line_1, line_2 = window
+        if line_0 is None or line_1 is None or line_2 is None:
+            raise ValueError(f"Invalid window: line_0={line_0}, line_1={line_1}, line_2={line_2}")
 
-            line_0 = line_0.rstrip()
-            line_1 = line_1.rstrip()
-            line_2 = line_2.rstrip()
+        line_0 = line_0.rstrip()
+        line_1 = line_1.rstrip()
+        line_2 = line_2.rstrip()
 
-            symbols = get_symbols(line_0, row - 1) | get_symbols(line_1, row) | get_symbols(line_2, row + 1)
-            for match in pattern.finditer(line_1):
-                if match.group("number") is None:
-                    continue
+        symbols = get_symbols(line_0, row - 1) | get_symbols(line_1, row) | get_symbols(line_2, row + 1)
+        for match in pattern.finditer(line_1):
+            if match.group("number") is None:
+                continue
 
-                number = int(match.group(0))
-                part_number = PartNumber(number, Coordinate(row, match.start()))
-                for symbol in symbols:
-                    if part_number.is_adjacent(symbol.coordinate):
-                        symbol_to_part_numbers.setdefault(symbol, set()).add(part_number)
-                        part_number_to_symbols.setdefault(part_number, set()).add(symbol)
+            number = int(match.group(0))
+            part_number = PartNumber(number, Coordinate(row, match.start()))
+            for symbol in symbols:
+                if part_number.is_adjacent(symbol.coordinate):
+                    symbol_to_part_numbers.setdefault(symbol, set()).add(part_number)
+                    part_number_to_symbols.setdefault(part_number, set()).add(symbol)
 
     return Adjacencies(symbol_to_part_numbers, part_number_to_symbols)
 
 
-def part_one(adjacencies: Adjacencies) -> None:
+def part_one(adjacencies: Adjacencies) -> int:
     """Prints the sum of all part numbers."""
     part_numbers = adjacencies.part_numbers
-    info_console.print(f"Sum of all part numbers: {sum(part_number.number for part_number in part_numbers)}")
+    result = sum(part_number.number for part_number in part_numbers)
+    info_console.print(f"Sum of all part numbers: {result}")
+    return result
 
 
-def part_two(adjacency: Adjacencies) -> None:
+def part_two(adjacency: Adjacencies) -> int:
     """
     Prints the sum of all gear ratios. A gear ratio is the product of part numbers adjacent to a gear. A gear is any
     "*" symbol adjacent to exactly two part numbers.
     """
-    info_console.print(f"Sum of all gear ratios: {sum(adjacency.gear_ratios())}")
+    result = sum(adjacency.gear_ratios())
+    info_console.print(f"Sum of all gear ratios: {result}")
+    return result
 
 
 def main():
     adjacencies = get_input()
-    part_one(adjacencies)
-    part_two(adjacencies)
+    print(part_one(adjacencies))
+    print(part_two(adjacencies))
 
 
 if __name__ == "__main__":

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
+import sys
 from functools import total_ordering
 from typing import Dict, Iterable, Optional, Set
 from more_itertools import first_true
-from pathlib import Path
-from rich import print
+from rich.console import Console
 
-current_file = Path(__file__).absolute()
+info_console = Console(stderr=True)
 
 @total_ordering
 class File:
@@ -88,29 +88,28 @@ class Directory:
 
 def read_input() -> Directory:
     root = Directory("/")
-    with (current_file.parent / "data" / "input" / "07.txt").open() as f:
-        for line in f:
-            if line.startswith("$ cd"):
-                dir = line[5:].strip()
-                if dir == "/":
-                    root = root.get_maximal_root()
-                elif dir == "..":
-                    if root.parent is None:
-                        raise ValueError("Cannot go up from root")
+    for line in sys.stdin:
+        if line.startswith("$ cd"):
+            dir = line[5:].strip()
+            if dir == "/":
+                root = root.get_maximal_root()
+            elif dir == "..":
+                if root.parent is None:
+                    raise ValueError("Cannot go up from root")
 
-                    root = root.parent
-                else:
-                    root = root.directories[dir]
+                root = root.parent
+            else:
+                root = root.directories[dir]
 
-            elif line.startswith("$ ls"):
-                pass
-            elif line.startswith("dir "):
-                name = line[4:].strip()
-                root.directories[name] = Directory(name, root)
-            elif line.strip() != "":
-                size, name = line.strip().split(" ")
-                size = int(size)
-                root.files.add(File(name, size, root))
+        elif line.startswith("$ ls"):
+            pass
+        elif line.startswith("dir "):
+            name = line[4:].strip()
+            root.directories[name] = Directory(name, root)
+        elif line.strip() != "":
+            size, name = line.strip().split(" ")
+            size = int(size)
+            root.files.add(File(name, size, root))
 
     return root.get_maximal_root()
 
@@ -138,11 +137,13 @@ def part_2(root: Directory, total_size: int = 70000000, required: int = 30000000
 
 def main():
     root = read_input()
-    print(f"Read directory {root.name} (size: {root.size()})")
-    print(f"Part 1: {part_1(root)}")
+    info_console.print(f"Read directory {root.name} (size: {root.size()})")
+    print(part_1(root))
 
     part_2_dir = part_2(root)
-    print(f"Part 2: {part_2_dir.size()} (removing {part_2_dir} to free up {part_2_dir.size()} bytes)")
+    part_2_dir_size = part_2_dir.size()
+    info_console.print(f"Part 2: {part_2_dir_size} (removing {part_2_dir} to free up {part_2_dir_size} bytes)")
+    print(part_2_dir_size)
 
 if __name__ == "__main__":
     main()

@@ -59,7 +59,7 @@ impl YearDayArgs {
             if is_aoc_event_for(now) {
                 Ok(now.into())
             } else {
-                return Err("the year is required if the current date is not during the Advent of Code event");
+                Err("the year is required if the current date is not during the Advent of Code event")
             }
         }, Ok)
     }
@@ -70,7 +70,7 @@ impl YearDayArgs {
             if is_aoc_event_for(now) {
                 Ok(now.into())
             } else {
-                return Err("the day is required if the current date is not during the Advent of Code event");
+                Err("the day is required if the current date is not during the Advent of Code event")
             }
         }, Ok)
     }
@@ -252,7 +252,7 @@ mod tests {{
 
 impl Cli {
     pub fn run(self) -> ExitCode {
-        let command = self.command.unwrap_or_else(|| Command::default());
+        let command = self.command.unwrap_or_default();
         match command {
             Command::Run(args) => args.run(),
             Command::Daily(args) => args.run(),

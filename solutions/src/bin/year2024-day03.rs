@@ -36,14 +36,12 @@ fn part1(input: &str) -> usize {
         .map(|cap| {
             let x = cap
                 .get(1)
-                .map(|m| m.as_str().parse().ok())
-                .flatten()
+                .and_then(|m| m.as_str().parse().ok())
                 .unwrap_or(0);
 
             let y = cap
                 .get(2)
-                .map(|m| m.as_str().parse().ok())
-                .flatten()
+                .and_then(|m| m.as_str().parse().ok())
                 .unwrap_or(0);
 
             x * y
@@ -53,8 +51,7 @@ fn part1(input: &str) -> usize {
 
 fn parse_number(cap: &regex::Captures, name: &str) -> usize {
     cap.name(name)
-        .map(|m| m.as_str().parse().ok())
-        .flatten()
+        .and_then(|m| m.as_str().parse().ok())
         .unwrap_or(0)
 }
 
@@ -100,11 +97,11 @@ fn part2(input: &str) -> usize {
             match instruction {
                 Instruction::Do => {
                     enabled = true;
-                    return 0;
+                    0
                 }
                 Instruction::Dont => {
                     enabled = false;
-                    return 0;
+                    0
                 }
                 Instruction::Mul(x, y) if enabled => x * y,
                 _ => 0,

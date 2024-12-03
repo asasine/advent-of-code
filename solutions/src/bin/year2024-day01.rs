@@ -73,7 +73,7 @@ pub fn part1(input: &str) -> usize {
 
     lists.iter_mut().for_each(|list| list.sort_unstable());
     (0..lists[0].len())
-        .map(|i| (lists[0][i] - lists[1][i]).abs() as usize)
+        .map(|i| (lists[0][i].abs_diff(lists[1][i])) as usize)
         .sum()
 }
 
@@ -135,10 +135,7 @@ pub fn part2(input: &str) -> usize {
         right.entry(r).and_modify(|e| *e += 1).or_insert(1);
     }
 
-    left.iter()
-        .map(|n| n * right.get(n).unwrap_or(&0))
-        .map(|v| v as usize)
-        .sum()
+    left.iter().map(|n| n * right.get(n).unwrap_or(&0)).sum()
 }
 
 aoc_macro::aoc_main!();

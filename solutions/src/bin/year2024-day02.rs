@@ -79,7 +79,7 @@ fn is_safe(levels: &[usize]) -> bool {
             (direction, delta)
         })
         .all(|(direction, delta)| {
-            *direction_cmp.get_or_insert(direction) == direction && 1 <= delta && delta <= 3
+            *direction_cmp.get_or_insert(direction) == direction && (1..=3).contains(&delta)
         })
 }
 

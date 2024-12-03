@@ -52,7 +52,7 @@ pub fn part1(input: &str) -> usize {
                 .map(|c| c.to_digit(10).unwrap());
 
             let first = digits.next().expect("no digits found");
-            let last = digits.rev().next().unwrap_or(first);
+            let last = digits.next_back().unwrap_or(first);
 
             (first * 10 + last) as usize
         })
@@ -109,15 +109,14 @@ pub fn part2(input: &str) -> usize {
 
             // find the last match (possibly overlapping) by starting with the [1..] slice
             let last = (1..line.len())
-                .map(|i| {
+                .filter_map(|i| {
                     let remaining = &line[i..];
                     re.find(remaining).map(|m| match_to_digit(&m))
                 })
-                .flatten()
                 .last()
                 .unwrap_or(first);
 
-            (first * 10 + last) as usize
+            first * 10 + last
         })
         .sum()
 }

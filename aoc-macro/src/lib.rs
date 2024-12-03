@@ -64,11 +64,11 @@ impl Parse for Part {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let ident = input.parse::<syn::Ident>()?;
         if ident == "part1" {
-            return Ok(Part::One);
+            Ok(Part::One)
         } else if ident == "part2" {
-            return Ok(Part::Two);
+            Ok(Part::Two)
         } else {
-            return Err(syn::Error::new(ident.span(), "expected part1 or part2"));
+            Err(syn::Error::new(ident.span(), "expected part1 or part2"))
         }
     }
 }

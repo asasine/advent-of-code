@@ -487,11 +487,7 @@ fn part2(input: &str) -> usize {
     grid.count_x_mas()
 }
 
-fn main() {
-    let input = include_str!("../../data/real/2024/04.txt");
-    println!("{}", part1(input));
-    println!("{}", part2(input));
-}
+aoc_macro::aoc_main!();
 
 #[cfg(test)]
 mod tests {

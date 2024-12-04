@@ -168,7 +168,6 @@ pub struct DailyArgs {
 impl DailyArgs {
     fn contents(yd: &YearDay) -> String {
         let doc = format!("Day {}", yd.day);
-        let real_input_include_str = format!("../../data/real/{}/{:02}.txt", yd.year, yd.day);
         let example_input_include_str =
             format!("../../data/examples/{}/{:02}/1.txt", yd.year, yd.day);
 
@@ -183,11 +182,7 @@ fn part2(input: &str) -> usize {{
     0
 }}
 
-fn main() {{
-    let input = include_str!("{real_input_include_str}");
-    println!("{{}}", part1(input));
-    println!("{{}}", part2(input));
-}}
+aoc_macro::aoc_main!();
 
 #[cfg(test)]
 mod tests {{

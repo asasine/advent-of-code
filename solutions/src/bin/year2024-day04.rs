@@ -1,4 +1,4 @@
-//! Day 4
+//! Day 4: Ceres Search
 
 use core::fmt;
 

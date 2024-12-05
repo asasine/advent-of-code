@@ -144,40 +144,36 @@ struct Rules<const N: usize> {
 
 impl<const N: usize> Rules<N> {
     fn from_rules(rules: &[Rule]) -> Self {
-        let mut rulesMatrix = [[false; N]; N];
+        let mut rules_matrix = [[false; N]; N];
         for rule in rules {
-            rulesMatrix[rule.0][rule.1] = true;
+            rules_matrix[rule.0][rule.1] = true;
         }
 
-        Self { rules: rulesMatrix }
+        Self {
+            rules: rules_matrix,
+        }
     }
 
     fn is_correct_order(&self, update: &Update) -> bool {
-        let pages = &update.0;
-        for i in 0..pages.len() {
-            for j in i + 1..pages.len() {
-                if self.rules[pages[j]][pages[i]] {
-                    return false;
-                }
-            }
-        }
-
-        true
+        update.0.is_sorted_by(|a, b| self.must_print_before(*a, *b))
     }
 
     /// Corrects the order of the update according to the rules.
     fn correct(&self, update: &Update) -> Update {
-        let pages = &update.0;
-        let mut corrected = pages.to_vec();
-        for i in 0..pages.len() {
-            for j in i + 1..pages.len() {
-                if self.rules[pages[j]][pages[i]] {
-                    corrected.swap(i, j);
-                }
+        let mut corrected = update.0.clone();
+        corrected.sort_by(|a, b| {
+            if self.must_print_before(*a, *b) {
+                std::cmp::Ordering::Less
+            } else {
+                std::cmp::Ordering::Equal
             }
-        }
+        });
 
         Update(corrected)
+    }
+
+    fn must_print_before(&self, a: usize, b: usize) -> bool {
+        self.rules[a][b]
     }
 }
 

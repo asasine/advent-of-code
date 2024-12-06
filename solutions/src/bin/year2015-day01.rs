@@ -68,15 +68,10 @@ fn part2(input: &str) -> usize {
         .pos
 }
 
+#[derive(Debug, Default)]
 struct Acc {
     floor: isize,
     pos: usize,
-}
-
-impl Default for Acc {
-    fn default() -> Self {
-        Acc { floor: 0, pos: 0 }
-    }
 }
 
 impl Acc {

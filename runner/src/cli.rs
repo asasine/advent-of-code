@@ -168,11 +168,15 @@ pub struct DailyArgs {
 impl DailyArgs {
     fn contents(yd: &YearDay) -> String {
         let doc = format!("Day {}", yd.day);
+        let year = yd.year.0;
+        let day = yd.day.0;
         let example_input_include_str =
             format!("../../data/examples/{}/{:02}/1.txt", yd.year, yd.day);
 
         format!(
             r#"//! {doc}
+//!
+//! https://adventofcode.com/{year}/day/{day}
 
 fn part1(input: &str) -> usize {{
     0

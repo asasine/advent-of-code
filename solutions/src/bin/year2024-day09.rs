@@ -234,9 +234,9 @@ impl DenseDiskMap {
             if let (DenseBlock::FreeSpace(a), DenseBlock::FreeSpace(b)) = (prev, current) {
                 self.0[i - 1] = DenseBlock::FreeSpace(a + b);
                 self.0.remove(i);
-            } else {
-                i -= 1;
             }
+
+            i -= 1;
         }
     }
 }

@@ -221,22 +221,23 @@ impl DenseDiskMap {
         }
 
         // combine continguous free space blocks
-        let mut end = defragmented.0.len() - 1;
-        while end > 0 {
-            let block = &defragmented.0[end];
-            let previous = &defragmented.0[end - 1];
-            if let (DenseBlock::FreeSpace(size), DenseBlock::FreeSpace(previous_size)) =
-                (block, previous)
-            {
-                defragmented.0[end - 1] = DenseBlock::FreeSpace(size + previous_size);
-                defragmented.0.remove(end);
-                end -= 1;
-            }
-
-            end -= 1;
-        }
-
+        defragmented.combine();
         defragmented
+    }
+
+    /// Combine adjacent free space blocks.
+    fn combine(&mut self) {
+        let mut i = self.0.len() - 1;
+        while i >= 1 {
+            let prev = &self.0[i - 1];
+            let current = &self.0[i];
+            if let (DenseBlock::FreeSpace(a), DenseBlock::FreeSpace(b)) = (prev, current) {
+                self.0[i - 1] = DenseBlock::FreeSpace(a + b);
+                self.0.remove(i);
+            } else {
+                i -= 1;
+            }
+        }
     }
 }
 
@@ -386,5 +387,32 @@ mod tests {
         ]);
 
         assert_eq!(expected, defragmented);
+    }
+
+    #[test]
+    fn combine() {
+        let mut actual = DenseDiskMap(vec![
+            DenseBlock::FreeSpace(1),
+            DenseBlock::FreeSpace(2),
+            DenseBlock::FreeSpace(3),
+            DenseBlock::FreeSpace(4),
+            DenseBlock::File { id: 0, size: 1 },
+            DenseBlock::FreeSpace(5),
+            DenseBlock::FreeSpace(6),
+            DenseBlock::File { id: 1, size: 1 },
+            DenseBlock::FreeSpace(7),
+        ]);
+
+        actual.combine();
+
+        let expected = DenseDiskMap(vec![
+            DenseBlock::FreeSpace(10),
+            DenseBlock::File { id: 0, size: 1 },
+            DenseBlock::FreeSpace(11),
+            DenseBlock::File { id: 1, size: 1 },
+            DenseBlock::FreeSpace(7),
+        ]);
+
+        assert_eq!(expected, actual);
     }
 }

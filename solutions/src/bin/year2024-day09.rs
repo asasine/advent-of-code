@@ -248,12 +248,10 @@ impl FromStr for DenseDiskMap {
         // The input is alternating characters of the number of files in a block and the number of free blocks.
         let mut elements = Vec::new();
         let numbers = s.trim().chars().map(|c| c.to_digit(10).unwrap() as usize);
-        let mut file_id = 0;
-        for mut chunk in numbers.chunks(2).into_iter() {
+        for (file_id, mut chunk) in numbers.chunks(2).into_iter().enumerate() {
             let size = chunk.next().unwrap();
             let file = DenseBlock::File { id: file_id, size };
             elements.push(file);
-            file_id += 1;
 
             // the last chunk isn't followed by free space
             match chunk.next() {

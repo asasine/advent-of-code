@@ -4,7 +4,7 @@
 
 use std::{collections::HashSet, str::FromStr};
 
-use solutions::grid::{Coordinate, Direction, Grid, Rectangle};
+use solutions::grid::{Coordinate, Grid};
 
 fn part1(input: &str) -> usize {
     let grid = Grid::<Cell>::from_str(input).unwrap();
@@ -50,10 +50,7 @@ enum Cell {
 
 impl Cell {
     fn is_trailhead(&self) -> bool {
-        match self {
-            Cell::Height(0) => true,
-            _ => false,
-        }
+        matches!(self, Cell::Height(0))
     }
 }
 
@@ -108,9 +105,8 @@ impl LavaIslandHikingGuide {
                 .von_neumann_within(self.grid.extent())
                 .into_iter()
                 .flatten()
-                .filter(|neighbor| match self.grid.get(*neighbor) {
-                    Some(Cell::Height(h)) if *h == height + 1 => true,
-                    _ => false,
+                .filter(|neighbor| {
+                    matches!(self.grid.get(*neighbor), Some(Cell::Height(h)) if *h == height + 1)
                 });
 
             stack.extend(reachable_new_neighbors);

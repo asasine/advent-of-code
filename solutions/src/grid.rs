@@ -14,7 +14,7 @@ impl Coordinate {
     /// Try and move a coordinate in a direction.
     pub fn try_move(&self, other: Direction) -> Option<Self> {
         match other {
-            Direction::Up => self.y.checked_sub(1).map(|y| Self { x: self.x, y: y }),
+            Direction::Up => self.y.checked_sub(1).map(|y| Self { x: self.x, y }),
             Direction::Right => Some(Self {
                 x: self.x + 1,
                 y: self.y,
@@ -193,7 +193,7 @@ pub enum Direction {
 
 impl Direction {
     /// Turn right from the current direction.
-    fn turn_right(self) -> Self {
+    pub fn turn_right(self) -> Self {
         match self {
             Direction::Up => Direction::Right,
             Direction::Right => Direction::Down,
@@ -203,7 +203,7 @@ impl Direction {
     }
 
     /// Turn left from the current direction.
-    fn turn_left(self) -> Self {
+    pub fn turn_left(self) -> Self {
         match self {
             Direction::Up => Direction::Left,
             Direction::Right => Direction::Up,
@@ -213,13 +213,26 @@ impl Direction {
     }
 
     /// Reverse the current direction.
-    fn reverse(self) -> Self {
+    pub fn reverse(self) -> Self {
         match self {
             Direction::Up => Direction::Down,
             Direction::Right => Direction::Left,
             Direction::Down => Direction::Up,
             Direction::Left => Direction::Right,
         }
+    }
+}
+
+impl fmt::Display for Direction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            Direction::Up => "^",
+            Direction::Right => ">",
+            Direction::Down => "v",
+            Direction::Left => "<",
+        };
+
+        write!(f, "{}", s)
     }
 }
 
@@ -597,12 +610,12 @@ GHI"#,
             assert_eq!(grid.get(Coordinate { x: 3, y: 3 }), None);
         }
 
-        struct Cell(char);
-        impl TryFrom<char> for Cell {
+        struct Number;
+        impl TryFrom<char> for Number {
             type Error = char;
             fn try_from(c: char) -> Result<Self, Self::Error> {
                 match c {
-                    '0'..='9' => Ok(Cell(c)),
+                    '0'..='9' => Ok(Number),
                     _ => Err(c),
                 }
             }
@@ -610,7 +623,7 @@ GHI"#,
 
         #[test]
         fn from_str_error() {
-            let grid = Grid::<Cell>::from_str("123ABC");
+            let grid = Grid::<Number>::from_str("123ABC");
             match grid {
                 Ok(_) => panic!("Expected error"),
                 Err('A') => {}

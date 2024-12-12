@@ -5,6 +5,8 @@
 use core::fmt;
 use std::collections::{HashMap, HashSet};
 
+use solutions::grid::Direction;
+
 fn part1(input: &str) -> usize {
     part1_impl::<130>(input)
 }
@@ -19,49 +21,6 @@ fn part1_impl<const N: usize>(input: &str) -> usize {
 
     eprintln!("{}", grid);
     grid.get_visited_coordinates().len()
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-enum Direction {
-    Up,
-    Right,
-    Down,
-    Left,
-}
-
-impl Direction {
-    fn turn_right(self) -> Self {
-        match self {
-            Direction::Up => Direction::Right,
-            Direction::Right => Direction::Down,
-            Direction::Down => Direction::Left,
-            Direction::Left => Direction::Up,
-        }
-    }
-}
-
-impl TryFrom<char> for Direction {
-    type Error = ();
-    fn try_from(c: char) -> Result<Self, Self::Error> {
-        match c {
-            '^' => Ok(Direction::Up),
-            '>' => Ok(Direction::Right),
-            'v' => Ok(Direction::Down),
-            '<' => Ok(Direction::Left),
-            _ => Err(()),
-        }
-    }
-}
-
-impl fmt::Display for Direction {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Direction::Up => write!(f, "^"),
-            Direction::Right => write!(f, ">"),
-            Direction::Down => write!(f, "v"),
-            Direction::Left => write!(f, "<"),
-        }
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -215,9 +174,8 @@ impl<const N: usize> Grid<N> {
                     '.' => Cell::Empty,
                     '#' => Cell::Obstruction,
                     '^' => {
-                        let direction = Direction::try_from(c).unwrap();
                         guard = Some(Guard {
-                            direction,
+                            direction: Direction::Up,
                             position: Coordinate { x, y },
                         });
 

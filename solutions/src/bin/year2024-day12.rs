@@ -15,14 +15,14 @@ fn part1(input: &str) -> usize {
     let grid = Grid::<Plot>::from_str(input).unwrap();
     let garden = Garden { grid };
     let fencing = garden.fencing();
-    fencing.iter().map(|(_, f)| f.price()).sum()
+    fencing.values().map(|f| f.price()).sum()
 }
 
 fn part2(input: &str) -> usize {
     let grid = Grid::<Plot>::from_str(input).unwrap();
     let garden = Garden { grid };
     let fencing = garden.fencing();
-    fencing.iter().map(|(_, f)| f.bulk_price()).sum()
+    fencing.values().map(|f| f.bulk_price()).sum()
 }
 
 aoc_macro::aoc_main!();
@@ -112,7 +112,7 @@ impl Region {
                 .von_neumann()
                 .into_iter()
                 .flatten()
-                .filter(|c| self.plots.contains(&c))
+                .filter(|c| self.plots.contains(c))
                 .count();
 
             (*c, neighbors)

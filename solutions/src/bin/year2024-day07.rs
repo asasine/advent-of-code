@@ -123,7 +123,7 @@ impl Operator {
             Operator::Add => a + b,
             Operator::Multiply => a * b,
             Operator::Concatenation => {
-                let b_digits = b.checked_ilog10().map(|d| d + 1).unwrap_or(1);
+                let b_digits = solutions::num::usize::digits(b);
                 a * 10usize.pow(b_digits) + b
             }
         }

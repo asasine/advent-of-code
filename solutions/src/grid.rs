@@ -102,6 +102,12 @@ impl Coordinate {
     }
 }
 
+impl fmt::Display for Coordinate {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({}, {})", self.x, self.y)
+    }
+}
+
 /// A rectangle defined by two coordinates.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Rectangle {
@@ -185,6 +191,38 @@ pub enum Direction {
     Left,
 }
 
+impl Direction {
+    /// Turn right from the current direction.
+    fn turn_right(self) -> Self {
+        match self {
+            Direction::Up => Direction::Right,
+            Direction::Right => Direction::Down,
+            Direction::Down => Direction::Left,
+            Direction::Left => Direction::Up,
+        }
+    }
+
+    /// Turn left from the current direction.
+    fn turn_left(self) -> Self {
+        match self {
+            Direction::Up => Direction::Left,
+            Direction::Right => Direction::Up,
+            Direction::Down => Direction::Right,
+            Direction::Left => Direction::Down,
+        }
+    }
+
+    /// Reverse the current direction.
+    fn reverse(self) -> Self {
+        match self {
+            Direction::Up => Direction::Down,
+            Direction::Right => Direction::Left,
+            Direction::Down => Direction::Up,
+            Direction::Left => Direction::Right,
+        }
+    }
+}
+
 /// A grid of cells.
 pub struct Grid<T> {
     /// The cells in the grid.
@@ -196,15 +234,18 @@ pub struct Grid<T> {
 
 impl<T> FromStr for Grid<T>
 where
-    T: From<char>,
+    T: TryFrom<char>,
 {
-    type Err = ();
-
+    type Err = T::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let cells = s
+        let cells: Vec<Vec<T>> = s
             .lines()
-            .map(|line| line.chars().map(|c| T::from(c)).collect::<Vec<T>>())
-            .collect::<Vec<Vec<T>>>();
+            .map(|line| {
+                line.chars()
+                    .map(|c| T::try_from(c))
+                    .collect::<Result<Vec<T>, _>>()
+            })
+            .collect::<Result<Vec<_>, _>>()?;
 
         Ok(Self::new(cells))
     }
@@ -241,6 +282,14 @@ impl<T> Grid<T> {
     pub fn into_cells(self) -> Vec<Vec<T>> {
         self.cells
     }
+
+    /// Enumerate the cells in the grid.
+    pub fn enumerate(&self) -> GridEnumerateIterator<T> {
+        GridEnumerateIterator {
+            grid: self,
+            rect_iter: self.extent.into_iter(),
+        }
+    }
 }
 
 impl<T> fmt::Display for Grid<T>
@@ -256,6 +305,21 @@ where
         }
 
         Ok(())
+    }
+}
+
+pub struct GridEnumerateIterator<'a, T> {
+    grid: &'a Grid<T>,
+    rect_iter: RectIterator,
+}
+
+impl<'a, T> Iterator for GridEnumerateIterator<'a, T> {
+    type Item = (Coordinate, &'a T);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.rect_iter
+            .next()
+            .and_then(|c| self.grid.get(c).map(|t| (c, t)))
     }
 }
 
@@ -408,6 +472,150 @@ mod tests {
             assert_eq!(iter.next(), Some(Coordinate { x: 0, y: 1 }));
             assert_eq!(iter.next(), Some(Coordinate { x: 1, y: 1 }));
             assert_eq!(iter.next(), None);
+        }
+    }
+
+    mod direction {
+        use super::*;
+
+        #[test]
+        fn turn_right() {
+            fn four_times(d: Direction) -> Direction {
+                d.turn_right().turn_right().turn_right().turn_right()
+            }
+
+            assert_eq!(Direction::Up, four_times(Direction::Up));
+            assert_eq!(Direction::Right, four_times(Direction::Right));
+            assert_eq!(Direction::Down, four_times(Direction::Down));
+            assert_eq!(Direction::Left, four_times(Direction::Left));
+        }
+
+        #[test]
+        fn turn_left() {
+            fn four_times(d: Direction) -> Direction {
+                d.turn_left().turn_left().turn_left().turn_left()
+            }
+
+            assert_eq!(Direction::Up, four_times(Direction::Up));
+            assert_eq!(Direction::Right, four_times(Direction::Right));
+            assert_eq!(Direction::Down, four_times(Direction::Down));
+            assert_eq!(Direction::Left, four_times(Direction::Left));
+        }
+
+        #[test]
+        fn reverse() {
+            fn two_times(d: Direction) -> Direction {
+                d.reverse().reverse()
+            }
+
+            assert_eq!(Direction::Up, two_times(Direction::Up));
+            assert_eq!(Direction::Right, two_times(Direction::Right));
+            assert_eq!(Direction::Down, two_times(Direction::Down));
+            assert_eq!(Direction::Left, two_times(Direction::Left));
+        }
+    }
+
+    mod grid {
+        use super::*;
+
+        #[test]
+        fn get() {
+            let cells = vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]];
+
+            let grid = Grid::new(cells);
+
+            assert_eq!(grid.get(Coordinate { x: 0, y: 0 }), Some(&1));
+            assert_eq!(grid.get(Coordinate { x: 2, y: 2 }), Some(&9));
+            assert_eq!(grid.get(Coordinate { x: 3, y: 3 }), None);
+        }
+
+        #[test]
+        fn get_mut() {
+            let cells = vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]];
+
+            let mut grid = Grid::new(cells);
+            assert_eq!(grid.get_mut(Coordinate { x: 0, y: 0 }), Some(&mut 1));
+            assert_eq!(grid.get_mut(Coordinate { x: 2, y: 2 }), Some(&mut 9));
+            assert_eq!(grid.get_mut(Coordinate { x: 3, y: 3 }), None);
+
+            *grid.get_mut(Coordinate { x: 0, y: 0 }).unwrap() = 10;
+            assert_eq!(grid.get(Coordinate { x: 0, y: 0 }), Some(&10));
+        }
+
+        #[test]
+        fn extent() {
+            let cells = vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]];
+
+            let grid = Grid::new(cells);
+
+            assert_eq!(
+                grid.extent(),
+                Rectangle {
+                    min: Coordinate { x: 0, y: 0 },
+                    max: Coordinate { x: 2, y: 2 },
+                }
+            );
+        }
+
+        #[test]
+        fn into_cells() {
+            let cells = vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]];
+            let grid = Grid::new(cells.clone());
+            assert_eq!(grid.into_cells(), cells);
+        }
+
+        #[test]
+        fn enumerate() {
+            let cells = vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]];
+            let grid = Grid::new(cells);
+
+            let mut iter = grid.enumerate();
+            assert_eq!(iter.next(), Some((Coordinate { x: 0, y: 0 }, &1)));
+            assert_eq!(iter.next(), Some((Coordinate { x: 1, y: 0 }, &2)));
+            assert_eq!(iter.next(), Some((Coordinate { x: 2, y: 0 }, &3)));
+            assert_eq!(iter.next(), Some((Coordinate { x: 0, y: 1 }, &4)));
+            assert_eq!(iter.next(), Some((Coordinate { x: 1, y: 1 }, &5)));
+            assert_eq!(iter.next(), Some((Coordinate { x: 2, y: 1 }, &6)));
+            assert_eq!(iter.next(), Some((Coordinate { x: 0, y: 2 }, &7)));
+            assert_eq!(iter.next(), Some((Coordinate { x: 1, y: 2 }, &8)));
+            assert_eq!(iter.next(), Some((Coordinate { x: 2, y: 2 }, &9)));
+            assert_eq!(iter.next(), None);
+            assert_eq!(iter.next(), None); // fused
+        }
+
+        #[test]
+        fn from_str() {
+            let grid = Grid::<char>::from_str(
+                r#"ABC
+DEF
+GHI"#,
+            )
+            .unwrap();
+
+            assert_eq!(grid.get(Coordinate { x: 0, y: 0 }), Some(&'A'));
+            assert_eq!(grid.get(Coordinate { x: 2, y: 2 }), Some(&'I'));
+            assert_eq!(grid.get(Coordinate { x: 3, y: 3 }), None);
+        }
+
+        struct Cell(char);
+        impl TryFrom<char> for Cell {
+            type Error = char;
+            fn try_from(c: char) -> Result<Self, Self::Error> {
+                match c {
+                    '0'..='9' => Ok(Cell(c)),
+                    _ => Err(c),
+                }
+            }
+        }
+
+        #[test]
+        fn from_str_error() {
+            let grid = Grid::<Cell>::from_str("123ABC");
+            match grid {
+                Ok(_) => panic!("Expected error"),
+                Err('A') => {}
+                Err(c) => panic!("Expected error with 'A', got '{}'", c),
+            }
         }
     }
 }

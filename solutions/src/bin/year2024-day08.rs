@@ -3,28 +3,29 @@
 //! https://adventofcode.com/2024/day/8
 
 use core::fmt;
-use std::{
-    collections::{HashMap, HashSet},
-    str::FromStr,
-};
+use std::collections::{HashMap, HashSet};
 
 use itertools::Itertools;
 use nalgebra::Point2;
 
-fn part1(input: &str) -> usize {
-    let grid = input.parse::<Grid>().unwrap();
-    eprintln!("{}", grid);
+use solutions::grid::{Coordinate, Grid};
 
-    let antinodes = grid.get_first_antinodes();
+fn part1(input: &str) -> usize {
+    let grid = input.parse::<Grid<Cell>>().unwrap();
+    let city = City::from_grid(grid);
+    println!("{}", city.grid);
+
+    let antinodes = city.get_first_antinodes();
     eprintln!("With first antinodes:");
     eprintln!("{}", antinodes);
     antinodes.distinct_in_bounds().len()
 }
 
 fn part2(input: &str) -> usize {
-    let grid = input.parse::<Grid>().unwrap();
-    eprintln!("{}", grid);
-    let antinodes = grid.get_all_antinodes();
+    let grid = input.parse::<Grid<Cell>>().unwrap();
+    let city = City::from_grid(grid);
+    eprintln!("{}", city.grid);
+    let antinodes = city.get_all_antinodes();
     eprintln!("With all antinodes:");
     eprintln!("{}", antinodes);
     antinodes.distinct_in_bounds().len()
@@ -82,10 +83,9 @@ struct Antinode {
     location: Point2i,
 }
 
-#[derive(Debug)]
 struct Antinodes<'a> {
     antinodes: HashSet<Antinode>,
-    grid: &'a Grid,
+    city: &'a City,
 }
 
 impl<'a> Antinodes<'a> {
@@ -97,48 +97,47 @@ impl<'a> Antinodes<'a> {
 impl<'a> fmt::Display for Antinodes<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let locations = self.distinct_in_bounds();
-        for (y, row) in self.grid.cells.iter().enumerate() {
-            for (x, cell) in row.iter().enumerate() {
-                let p = Point2i::new(x as i64, y as i64);
-
-                if locations.contains(&p) && !cell.is_antenna() {
-                    write!(f, "#")?;
-                } else {
-                    write!(f, "{cell}")?;
-                }
+        let mut prev_y = None;
+        for (c, cell) in self.city.grid.enumerate() {
+            let changed_row = prev_y.replace(c.y).is_some_and(|prev| prev != c.y);
+            let p = Point2i::new(c.x as i64, c.y as i64);
+            if locations.contains(&p) && !cell.is_antenna() {
+                write!(f, "#")?;
+            } else {
+                write!(f, "{cell}")?;
             }
-            writeln!(f)?;
+
+            if changed_row {
+                writeln!(f)?;
+            }
         }
 
         Ok(())
     }
 }
 
-#[derive(Debug, Clone)]
-struct Grid {
-    cells: Vec<Vec<Cell>>,
+#[derive()]
+struct City {
+    grid: Grid<Cell>,
     frequencies_to_locations: HashMap<Frequency, Vec<Point2i>>,
 }
 
-impl Grid {
-    fn from_cells(cells: Vec<Vec<Cell>>) -> Self {
+impl City {
+    fn from_grid(grid: Grid<Cell>) -> Self {
         let frequencies_to_locations = {
             let mut m = HashMap::new();
-            for (y, row) in cells.iter().enumerate() {
-                for (x, cell) in row.iter().enumerate() {
-                    if let Cell::Antenna(frequency) = cell {
-                        m.entry(*frequency)
-                            .or_insert_with(Vec::new)
-                            .push(Point2i::new(x as i64, y as i64));
-                    }
+            for (c, cell) in grid.enumerate() {
+                if let Cell::Antenna(frequency) = cell {
+                    let p = Point2i::new(c.x as i64, c.y as i64);
+                    m.entry(*frequency).or_insert_with(Vec::new).push(p);
                 }
             }
 
             m
         };
 
-        Grid {
-            cells,
+        City {
+            grid,
             frequencies_to_locations,
         }
     }
@@ -148,7 +147,12 @@ impl Grid {
             return None;
         }
 
-        self.cells.get(point.y as usize)?.get(point.x as usize)
+        let c = Coordinate {
+            x: point.x as usize,
+            y: point.y as usize,
+        };
+
+        self.grid.get(c)
     }
 
     fn get_first_antinodes(&self) -> Antinodes {
@@ -179,7 +183,7 @@ impl Grid {
 
         Antinodes {
             antinodes,
-            grid: self,
+            city: self,
         }
     }
 
@@ -226,32 +230,8 @@ impl Grid {
 
         Antinodes {
             antinodes,
-            grid: self,
+            city: self,
         }
-    }
-}
-
-impl FromStr for Grid {
-    type Err = char;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let cells: Vec<Vec<Cell>> = s
-            .lines()
-            .map(|line| line.chars().map(|c| Cell::try_from(c)).try_collect())
-            .try_collect()?;
-
-        Ok(Grid::from_cells(cells))
-    }
-}
-
-impl fmt::Display for Grid {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for row in self.cells.iter() {
-            for cell in row {
-                write!(f, "{}", cell)?;
-            }
-            writeln!(f)?;
-        }
-        Ok(())
     }
 }
 

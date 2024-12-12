@@ -2,57 +2,20 @@
 //!
 //! https://adventofcode.com/2024/day/4
 
-use core::fmt;
-
 use itertools::Itertools;
+use solutions::grid::{Coordinate, Direction, Grid};
 
 fn part1(input: &str) -> usize {
-    let grid = Grid::from(input);
+    let grid = input.parse::<Grid<char>>().unwrap();
+    let grid = WordSearch { data: grid };
     grid.count_word("XMAS")
 }
 
-#[derive(Debug, Clone, Copy)]
-struct Coordinate {
-    x: usize,
-    y: usize,
+struct WordSearch {
+    data: Grid<char>,
 }
 
-impl fmt::Display for Coordinate {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "({}, {})", self.x, self.y)
-    }
-}
-
-impl Coordinate {
-    /// Returns an iterator over all coordinates in a grid whose bottom-right corner is at the given coordinate, starting at the top-left corner.
-    ///
-    /// This iterates in row-major order. That is, it starts at the top-left corner and moves right, then down, then right, then down, and so on.
-    fn grid_iter(&self) -> impl Iterator<Item = Coordinate> {
-        (0..self.y)
-            .cartesian_product(0..self.x)
-            .map(move |(y, x)| Coordinate { x, y })
-    }
-}
-
-struct Grid {
-    data: Vec<Vec<char>>,
-}
-
-impl From<&str> for Grid {
-    fn from(input: &str) -> Self {
-        let data = input.lines().map(|line| line.chars().collect()).collect();
-        Self { data }
-    }
-}
-
-impl Grid {
-    fn extent(&self) -> Coordinate {
-        Coordinate {
-            x: self.data[0].len(),
-            y: self.data.len(),
-        }
-    }
-
+impl WordSearch {
     /// Count the number of times the `X-MAS` pattern appears in the grid.
     ///
     /// This pattern is a cross of `MAS`, rooted at the `A`. The `MAS` can be written forwards or backwards.
@@ -67,10 +30,10 @@ impl Grid {
     /// The X-MAS pattern appears once in this example.
     fn count_x_mas(&self) -> usize {
         // For starters, we know that every `X-MAS` pattern must have an `A` in the middle, so we can start our searches there.
-        self.extent()
-            .grid_iter()
-            .filter(|&c| self.data[c.y][c.x] == 'A')
-            .filter(|&c| self.is_x_mas(c))
+        self.data
+            .enumerate()
+            .filter(|(_, &c)| c == 'A')
+            .filter(|(c, _)| self.is_x_mas(*c))
             .count()
     }
 
@@ -80,38 +43,37 @@ impl Grid {
     /// coordinate is the location of the `A`.
     fn is_x_mas(&self, coordinate: Coordinate) -> bool {
         // if the pattern would go out of bounds, it can't be an X-MAS
-        if coordinate.y < 1
-            || coordinate.y + 1 >= self.data.len()
-            || coordinate.x < 1
-            || coordinate.x + 1 >= self.data[coordinate.y].len()
+        if let Some((_, ne, _, se, _, sw, _, nw)) = coordinate
+            .moore_within(self.data.extent())
+            .into_iter()
+            .filter_map(|c| c.and_then(|c| self.data.get(c)))
+            .copied()
+            .collect_tuple()
         {
-            return false;
-        }
+            let a = *self.data.get(coordinate).unwrap();
+            if a != 'A' {
+                return false;
+            }
 
-        let a = self.data[coordinate.y][coordinate.x];
-        if a != 'A' {
-            return false;
-        }
+            // check top-left to bottom-right first
+            match (nw, se) {
+                ('M', 'S') => {}
+                ('S', 'M') => {}
+                _ => return false,
+            }
 
-        // check top-left to bottom-right first
-        let tl = self.data[coordinate.y - 1][coordinate.x - 1];
-        let br = self.data[coordinate.y + 1][coordinate.x + 1];
-        match (tl, br) {
-            ('M', 'S') => {}
-            ('S', 'M') => {}
-            _ => return false,
-        }
+            // check top-right to bottom-left
+            match (ne, sw) {
+                ('M', 'S') => {}
+                ('S', 'M') => {}
+                _ => return false,
+            }
 
-        // check top-right to bottom-left
-        let tr = self.data[coordinate.y - 1][coordinate.x + 1];
-        let bl = self.data[coordinate.y + 1][coordinate.x - 1];
-        match (tr, bl) {
-            ('M', 'S') => {}
-            ('S', 'M') => {}
-            _ => return false,
+            true
+        } else {
+            // some of the neighbors are out of bounds
+            false
         }
-
-        true
     }
 
     /// Count the number of times a word appears in the grid.
@@ -121,10 +83,10 @@ impl Grid {
             None => return 0,
         };
 
-        self.extent()
-            .grid_iter()
-            .filter(|&c| self.data[c.y][c.x] == first_letter)
-            .map(|coordinate| {
+        self.data
+            .enumerate()
+            .filter(|(_, &c)| c == first_letter)
+            .map(|(coordinate, _)| {
                 // eprintln!("{coordinate}");
                 self.count_words_at(word, coordinate)
             })
@@ -180,225 +142,83 @@ impl Grid {
         count
     }
 
+    /// Checks whether a word appears in the grid rooted at the given coordinate.
+    ///
+    /// The `try_move` function is used to move from one coordinate to the next. It should return the next coordinate,
+    /// or [`None`] if there are no more moves to make (e.g., it leaves the grid).
+    fn check_word<F>(&self, word: &str, start: Coordinate, mut try_move: F) -> bool
+    where
+        F: FnMut(Coordinate) -> Option<Coordinate>,
+    {
+        let mut coordinate = Some(start);
+        word.chars().all(|letter| match coordinate {
+            Some(c) => match self.data.get(c) {
+                Some(cell) if *cell == letter => {
+                    coordinate = try_move(c);
+                    true
+                }
+                Some(_) | None => false,
+            },
+            None => false,
+        })
+    }
+
     /// Checks whether the word appears horizontally at the given coordinate.
     fn check_word_horizontal(&self, word: &str, coordinate: Coordinate) -> bool {
-        if coordinate.y >= self.data.len() {
-            return false;
-        }
-
-        for (offset, letter) in word.chars().enumerate() {
-            let x = offset + coordinate.x;
-            if x >= self.data[coordinate.y].len() {
-                return false;
-            }
-
-            if self.data[coordinate.y][x] != letter {
-                return false;
-            }
-        }
-
-        true
+        self.check_word(word, coordinate, |c| c.try_move(Direction::Right))
     }
 
     /// Checks whether the word appears horizontally in reverse at the given coordinate.
     fn check_word_horizontal_reverse(&self, word: &str, coordinate: Coordinate) -> bool {
-        if coordinate.y >= self.data.len() {
-            return false;
-        }
-
-        for (offset, letter) in word.chars().enumerate() {
-            let x = match coordinate.x.checked_sub(offset) {
-                Some(x) => x,
-                None => return false,
-            };
-
-            if x >= self.data[coordinate.y].len() {
-                return false;
-            }
-
-            if self.data[coordinate.y][x] != letter {
-                return false;
-            }
-        }
-
-        true
+        self.check_word(word, coordinate, |c| c.try_move(Direction::Left))
     }
 
     /// Checks whether the word appears vertically at the given coordinate.
     fn check_word_vertical(&self, word: &str, coordinate: Coordinate) -> bool {
-        if coordinate.y >= self.data.len() {
-            return false;
-        }
-
-        if coordinate.x >= self.data[coordinate.y].len() {
-            return false;
-        }
-
-        for (offset, letter) in word.chars().enumerate() {
-            let y = offset + coordinate.y;
-            if y >= self.data.len() {
-                return false;
-            }
-
-            if self.data[y][coordinate.x] != letter {
-                return false;
-            }
-        }
-
-        true
+        self.check_word(word, coordinate, |c| c.try_move(Direction::Down))
     }
 
     /// Checks whether the word appears vertically in reverse at the given coordinate.
     fn check_word_vertical_reverse(&self, word: &str, coordinate: Coordinate) -> bool {
-        if coordinate.y >= self.data.len() {
-            return false;
-        }
-
-        if coordinate.x >= self.data[coordinate.y].len() {
-            return false;
-        }
-
-        for (offset, letter) in word.chars().enumerate() {
-            let y = match coordinate.y.checked_sub(offset) {
-                Some(y) => y,
-                None => return false,
-            };
-
-            if self.data[y][coordinate.x] != letter {
-                return false;
-            }
-        }
-
-        true
+        self.check_word(word, coordinate, |c| c.try_move(Direction::Up))
     }
 
     /// Checks whether the word appears diagonally downward at the given coordinate.
     fn check_word_diagonal_down(&self, word: &str, coordinate: Coordinate) -> bool {
-        if coordinate.y >= self.data.len() {
-            return false;
-        }
-
-        if coordinate.x >= self.data[coordinate.y].len() {
-            return false;
-        }
-
-        for (offset, letter) in word.chars().enumerate() {
-            let x = offset + coordinate.x;
-            let y = offset + coordinate.y;
-            if y >= self.data.len() || x >= self.data[y].len() {
-                return false;
-            }
-
-            if self.data[y][x] != letter {
-                return false;
-            }
-        }
-
-        true
+        self.check_word(word, coordinate, |c| {
+            c.try_move(Direction::Down)
+                .and_then(|c| c.try_move(Direction::Right))
+        })
     }
 
     /// Checks whether the word appeard diagonally downward in reverse at the given coordinate.
     fn check_word_diagonal_down_reverse(&self, word: &str, coordinate: Coordinate) -> bool {
-        if coordinate.y >= self.data.len() {
-            return false;
-        }
-
-        if coordinate.x >= self.data[coordinate.y].len() {
-            return false;
-        }
-
-        for (offset, letter) in word.chars().enumerate() {
-            let x = match coordinate.x.checked_sub(offset) {
-                Some(x) => x,
-                None => return false,
-            };
-
-            let y = coordinate.y + offset;
-            if y >= self.data.len() {
-                return false;
-            }
-
-            if x >= self.data[y].len() {
-                return false;
-            }
-
-            if self.data[y][x] != letter {
-                return false;
-            }
-        }
-
-        true
+        self.check_word(word, coordinate, |c| {
+            c.try_move(Direction::Down)
+                .and_then(|c| c.try_move(Direction::Left))
+        })
     }
 
     /// Checks whether the word appears diagonally upward at the given coordinate.
     fn check_word_diagonal_up(&self, word: &str, coordinate: Coordinate) -> bool {
-        if coordinate.y >= self.data.len() {
-            return false;
-        }
-
-        if coordinate.x >= self.data[coordinate.y].len() {
-            return false;
-        }
-
-        for (offset, letter) in word.chars().enumerate() {
-            let x = offset + coordinate.x;
-            let y = match coordinate.y.checked_sub(offset) {
-                Some(y) => y,
-                None => return false,
-            };
-
-            if y >= self.data.len() {
-                return false;
-            }
-
-            if x >= self.data[y].len() {
-                return false;
-            }
-
-            if self.data[y][x] != letter {
-                return false;
-            }
-        }
-
-        true
+        self.check_word(word, coordinate, |c| {
+            c.try_move(Direction::Up)
+                .and_then(|c| c.try_move(Direction::Right))
+        })
     }
 
     /// Checks whether the word appears diagonally upward in reverse at the given coordinate.
     fn check_word_diagonal_up_reverse(&self, word: &str, coordinate: Coordinate) -> bool {
-        if coordinate.y >= self.data.len() {
-            return false;
-        }
-
-        if coordinate.x >= self.data[coordinate.y].len() {
-            return false;
-        }
-
-        for (offset, letter) in word.chars().enumerate() {
-            let x = match coordinate.x.checked_sub(offset) {
-                Some(x) => x,
-                None => return false,
-            };
-
-            let y = match coordinate.y.checked_sub(offset) {
-                Some(y) => y,
-                None => return false,
-            };
-
-            if y >= self.data.len() {
-                return false;
-            }
-
-            if self.data[y][x] != letter {
-                return false;
-            }
-        }
-
-        true
+        self.check_word(word, coordinate, |c| {
+            c.try_move(Direction::Up)
+                .and_then(|c| c.try_move(Direction::Left))
+        })
     }
 }
 
 fn part2(input: &str) -> usize {
-    let grid = Grid::from(input);
+    let grid = input.parse::<Grid<char>>().unwrap();
+    let grid = WordSearch { data: grid };
     grid.count_x_mas()
 }
 
@@ -424,7 +244,10 @@ SAMXMAS
 .A.A.A.
 S..S..S"#;
 
-        let grid = Grid::from(input);
+        let grid = WordSearch {
+            data: input.parse::<Grid<char>>().unwrap(),
+        };
+
         let c = Coordinate { x: 3, y: 3 };
         assert!(grid.check_word_horizontal("XMAS", c));
         assert!(grid.check_word_horizontal_reverse("XMAS", c));

@@ -4,18 +4,21 @@
 
 use std::{collections::HashSet, str::FromStr};
 
+use solutions::grid::{Coordinate, Direction, Grid, Rectangle};
+
 fn part1(input: &str) -> usize {
     let grid = Grid::<Cell>::from_str(input).unwrap();
     let guide = LavaIslandHikingGuide { grid };
-    let trailheads = guide.grid.cells.iter().enumerate().flat_map(|(y, row)| {
-        row.iter().enumerate().filter_map(move |(x, cell)| {
-            if cell.is_trailhead() {
-                Some(Coordinate { x, y })
-            } else {
-                None
-            }
-        })
-    });
+    let trailheads =
+        guide.grid.enumerate().filter_map(
+            move |(c, cell)| {
+                if cell.is_trailhead() {
+                    Some(c)
+                } else {
+                    None
+                }
+            },
+        );
 
     trailheads.map(|c| guide.find_score(c)).sum()
 }
@@ -23,79 +26,21 @@ fn part1(input: &str) -> usize {
 fn part2(input: &str) -> usize {
     let grid = Grid::<Cell>::from_str(input).unwrap();
     let guide = LavaIslandHikingGuide { grid };
-    let trailheads = guide.grid.cells.iter().enumerate().flat_map(|(y, row)| {
-        row.iter().enumerate().filter_map(move |(x, cell)| {
-            if cell.is_trailhead() {
-                Some(Coordinate { x, y })
-            } else {
-                None
-            }
-        })
-    });
+    let trailheads =
+        guide.grid.enumerate().filter_map(
+            move |(c, cell)| {
+                if cell.is_trailhead() {
+                    Some(c)
+                } else {
+                    None
+                }
+            },
+        );
 
     trailheads.map(|c| guide.find_rating(c)).sum()
 }
 
 aoc_macro::aoc_main!();
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-struct Coordinate {
-    x: usize,
-    y: usize,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-struct Rectangle {
-    min: Coordinate,
-    max: Coordinate,
-}
-
-impl Rectangle {
-    fn contains(&self, c: Coordinate) -> bool {
-        c.x >= self.min.x && c.x <= self.max.x && c.y >= self.min.y && c.y <= self.max.y
-    }
-}
-
-impl Coordinate {
-    /// Try and move a coordinate in a direction.
-    fn try_move(&self, other: Direction) -> Option<Self> {
-        match other {
-            Direction::Up => self.y.checked_sub(1).map(|y| Self { x: self.x, y: y }),
-            Direction::Right => Some(Self {
-                x: self.x + 1,
-                y: self.y,
-            }),
-            Direction::Down => Some(Self {
-                x: self.x,
-                y: self.y + 1,
-            }),
-            Direction::Left => self.x.checked_sub(1).map(|x| Self { x, y: self.y }),
-        }
-    }
-
-    /// Try and move a coordinate in a direction, staying within the rectangle defined by min and max.
-    fn try_move_within(&self, other: Direction, extents: Rectangle) -> Option<Self> {
-        self.try_move(other)
-            .and_then(|c| if extents.contains(c) { Some(c) } else { None })
-    }
-
-    fn square_positions(&self, extents: Rectangle) -> [Option<Coordinate>; 4] {
-        [
-            self.try_move_within(Direction::Up, extents),
-            self.try_move_within(Direction::Right, extents),
-            self.try_move_within(Direction::Down, extents),
-            self.try_move_within(Direction::Left, extents),
-        ]
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-enum Direction {
-    Up,
-    Right,
-    Down,
-    Left,
-}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum Cell {
@@ -119,45 +64,6 @@ impl From<char> for Cell {
             '.' => Cell::Impassable,
             _ => panic!("Invalid cell: {}", c),
         }
-    }
-}
-
-struct Grid<T> {
-    cells: Vec<Vec<T>>,
-    extent: Rectangle,
-}
-
-impl<T> FromStr for Grid<T>
-where
-    T: From<char>,
-{
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let cells = s
-            .lines()
-            .map(|line| line.chars().map(|c| T::from(c)).collect::<Vec<T>>())
-            .collect::<Vec<Vec<T>>>();
-
-        Ok(Self::new(cells))
-    }
-}
-
-impl<T> Grid<T> {
-    fn new(cells: Vec<Vec<T>>) -> Self {
-        let extent = Rectangle {
-            min: Coordinate { x: 0, y: 0 },
-            max: Coordinate {
-                x: cells[0].len() - 1,
-                y: cells.len() - 1,
-            },
-        };
-
-        Self { cells, extent }
-    }
-
-    fn get(&self, c: Coordinate) -> Option<&T> {
-        self.cells.get(c.y).and_then(|row| row.get(c.x))
     }
 }
 
@@ -199,7 +105,7 @@ impl LavaIslandHikingGuide {
             }
 
             let reachable_new_neighbors = current
-                .square_positions(self.grid.extent)
+                .von_neumann_within(self.grid.extent())
                 .into_iter()
                 .flatten()
                 .filter(|neighbor| match self.grid.get(*neighbor) {

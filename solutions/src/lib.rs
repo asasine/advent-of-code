@@ -12,6 +12,8 @@ pub fn read_stdin() -> String {
     input
 }
 
+pub mod grid;
+
 pub mod num {
     //! Utilities for working with numbers.
 

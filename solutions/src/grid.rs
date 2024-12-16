@@ -229,6 +229,15 @@ impl Direction {
     pub fn is_horizontal(self) -> bool {
         matches!(self, Direction::Right | Direction::Left)
     }
+
+    pub fn all() -> [Direction; 4] {
+        [
+            Direction::Up,
+            Direction::Right,
+            Direction::Down,
+            Direction::Left,
+        ]
+    }
 }
 
 impl fmt::Display for Direction {
@@ -521,6 +530,8 @@ mod tests {
     }
 
     mod direction {
+        use std::collections::HashSet;
+
         use super::*;
 
         #[test]
@@ -573,6 +584,12 @@ mod tests {
             assert!(!Direction::Down.is_horizontal());
             assert!(Direction::Right.is_horizontal());
             assert!(Direction::Left.is_horizontal());
+        }
+
+        #[test]
+        fn all() {
+            let all = Direction::all().into_iter().collect::<HashSet<_>>();
+            assert_eq!(all.len(), 4);
         }
     }
 

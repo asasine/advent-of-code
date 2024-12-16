@@ -221,6 +221,14 @@ impl Direction {
             Direction::Left => Direction::Right,
         }
     }
+
+    pub fn is_vertical(self) -> bool {
+        matches!(self, Direction::Up | Direction::Down)
+    }
+
+    pub fn is_horizontal(self) -> bool {
+        matches!(self, Direction::Right | Direction::Left)
+    }
 }
 
 impl fmt::Display for Direction {
@@ -318,6 +326,30 @@ where
         }
 
         Ok(())
+    }
+}
+
+impl<T> fmt::Debug for Grid<T>
+where
+    T: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Grid")
+            .field("cells", &self.cells)
+            .field("extent", &self.extent)
+            .finish()
+    }
+}
+
+impl<T> Clone for Grid<T>
+where
+    T: Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            cells: self.cells.clone(),
+            extent: self.extent,
+        }
     }
 }
 
@@ -525,6 +557,22 @@ mod tests {
             assert_eq!(Direction::Right, two_times(Direction::Right));
             assert_eq!(Direction::Down, two_times(Direction::Down));
             assert_eq!(Direction::Left, two_times(Direction::Left));
+        }
+
+        #[test]
+        fn is_vertical() {
+            assert!(Direction::Up.is_vertical());
+            assert!(Direction::Down.is_vertical());
+            assert!(!Direction::Right.is_vertical());
+            assert!(!Direction::Left.is_vertical());
+        }
+
+        #[test]
+        fn is_horizontal() {
+            assert!(!Direction::Up.is_horizontal());
+            assert!(!Direction::Down.is_horizontal());
+            assert!(Direction::Right.is_horizontal());
+            assert!(Direction::Left.is_horizontal());
         }
     }
 

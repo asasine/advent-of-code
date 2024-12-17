@@ -8,30 +8,32 @@ use std::{
     str::FromStr,
 };
 
+use itertools::Itertools;
 use solutions::grid::{Coordinate, Direction, Grid};
 
 fn part1(input: &str) -> usize {
     let maze = Maze::from_str(input).unwrap();
     let graph = Graph::from(&maze);
-    let start = maze.start();
-    let search = graph.single_source(start);
-    let end = maze.end();
-    Direction::all()
-        .into_iter()
-        .filter_map(|direction| {
-            let node = Node {
-                coordinate: end,
-                direction,
-            };
+    eprintln!(
+        "Graph with {} nodes and {} edges",
+        graph.0.len(),
+        graph.0.values().map(|edges| edges.len()).sum::<usize>()
+    );
 
-            search.cost_to(node)
-        })
-        .min()
-        .unwrap()
+    let (cost, _) = graph.shortest_paths(maze.start(), maze.end());
+    cost
 }
 
 fn part2(input: &str) -> usize {
-    0
+    let maze = Maze::from_str(input).unwrap();
+    let graph = Graph::from(&maze);
+    let (_, paths) = graph.shortest_paths(maze.start(), maze.end());
+    paths
+        .iter()
+        .flatten()
+        .map(|path| path.coordinate)
+        .unique()
+        .count()
 }
 
 aoc_macro::aoc_main!();
@@ -90,23 +92,16 @@ struct Edge {
     cost: usize,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct State {
     node: Node,
     cost: usize,
+    path: Vec<Node>,
 }
 
 impl Ord for State {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        // deterministically order states by cost, then coordinate.x, then .y, then direction
-        self.cost
-            .cmp(&other.cost)
-            .then_with(|| self.node.coordinate.x.cmp(&other.node.coordinate.x))
-            .then_with(|| self.node.coordinate.y.cmp(&other.node.coordinate.y))
-            .then_with(|| {
-                // arbitrary, just needs to be consistent
-                (self.node.direction as usize).cmp(&(other.node.direction as usize))
-            })
+        other.cost.cmp(&self.cost) // min heap
     }
 }
 
@@ -120,6 +115,9 @@ impl From<&Maze> for Graph {
     fn from(maze: &Maze) -> Self {
         let mut adjacencies = HashMap::new();
 
+        let is_cell_and_not_wall =
+            |c: &Coordinate| maze.0.get(*c).is_some_and(|c| !matches!(c, Cell::Wall));
+
         // each coordinate gets four nodes, one for each direction, and edges for the turns
         for (coordinate, cell) in maze.0.enumerate() {
             if matches!(cell, Cell::Wall) {
@@ -132,39 +130,28 @@ impl From<&Maze> for Graph {
                     direction,
                 };
 
+                let neighbors = [
+                    (1001, direction.turn_left()),
+                    (1, direction),
+                    (1001, direction.turn_right()),
+                ]
+                .into_iter()
+                .filter_map(|(cost, direction)| {
+                    coordinate
+                        .try_move(direction)
+                        .filter(is_cell_and_not_wall)
+                        .map(|neighbor| Edge {
+                            source: node,
+                            target: Node {
+                                coordinate: neighbor,
+                                direction: direction,
+                            },
+                            cost: cost,
+                        })
+                });
+
                 let edges = adjacencies.entry(node).or_insert_with(Vec::new);
-                edges.push(Edge {
-                    source: node,
-                    target: Node {
-                        coordinate,
-                        direction: direction.turn_right(),
-                    },
-                    cost: 1000,
-                });
-
-                edges.push(Edge {
-                    source: node,
-                    target: Node {
-                        coordinate,
-                        direction: direction.turn_left(),
-                    },
-                    cost: 1000,
-                });
-
-                if let Some(neighbor) = coordinate.try_move(direction).filter(|next| {
-                    maze.0
-                        .get(*next)
-                        .is_some_and(|cell| !matches!(cell, Cell::Wall))
-                }) {
-                    edges.push(Edge {
-                        source: node,
-                        target: Node {
-                            coordinate: neighbor,
-                            direction,
-                        },
-                        cost: 1,
-                    });
-                }
+                edges.extend(neighbors);
             }
         }
 
@@ -173,6 +160,7 @@ impl From<&Maze> for Graph {
 }
 
 impl Maze {
+    /// Get the starting node.
     fn start(&self) -> Node {
         self.0
             .enumerate()
@@ -186,6 +174,7 @@ impl Maze {
             .unwrap()
     }
 
+    /// Get the ending coordinate. This is not a [`Node`] because the direction is not specified for the puzzle.
     fn end(&self) -> Coordinate {
         self.0
             .enumerate()
@@ -200,120 +189,57 @@ impl Maze {
 struct Graph(HashMap<Node, Vec<Edge>>);
 
 impl Graph {
-    fn single_source(&self, source: Node) -> SingleSource {
-        let mut heap = BinaryHeap::new();
-        let mut distances = HashMap::new();
-        let mut predecessors = HashMap::new();
-        distances.insert(source, 0);
-        heap.push(State {
+    fn out_edges(&self, node: Node) -> &[Edge] {
+        self.0.get(&node).map_or(&[], |edges| edges.as_slice())
+    }
+
+    fn shortest_paths(&self, source: Node, destination: Coordinate) -> (usize, Vec<Vec<Node>>) {
+        // Track the best paths to the destination.
+        let mut paths = Vec::new();
+        let mut best = std::usize::MAX;
+
+        // Track the nodes we've visited and the cost to get there.
+        let mut visited = HashMap::new();
+
+        // Explore the nodes with lowest cost first (min heap).
+        let mut frontier = BinaryHeap::new();
+        frontier.push(State {
             node: source,
             cost: 0,
+            path: vec![source],
         });
 
-        while let Some(State { cost, node }) = heap.pop() {
-            if cost > distances[&node] {
-                // we've already found a lower cost to this node
-                continue;
-            }
-
-            for edge in &self.0[&node] {
-                let next = State {
-                    cost: cost + edge.cost,
-                    node: edge.target,
-                };
-
-                let distance = distances.entry(next.node).or_insert(usize::MAX);
-                if next.cost > *distance {
-                    // not a better path
+        while let Some(State { node, cost, path }) = frontier.pop() {
+            // If we have already visited this node with a lower cost, skip it.
+            if let Some(&prev_cost) = visited.get(&node) {
+                if cost > prev_cost {
                     continue;
                 }
+            } else {
+                visited.insert(node, cost);
+            }
 
-                // this path is at least as good
-                *distance = next.cost;
-                heap.push(next);
-                let predecessors = predecessors.entry(next.node).or_insert_with(Vec::new);
-                if next.cost < *distance {
-                    // this path is better, so erase all predecessors
-                    predecessors.clear();
-                }
+            // If we've reached the end, we've found one shortest path.
+            // This is guaranteed to be a shortest path because we're using a min heap
+            if node.coordinate == destination && cost <= best {
+                paths.push(path.clone());
+                best = cost;
+            }
 
-                predecessors.push(*edge);
+            for edge in self.out_edges(node) {
+                frontier.push(State {
+                    node: edge.target,
+                    cost: cost + edge.cost,
+                    path: {
+                        let mut path = path.clone();
+                        path.push(edge.target);
+                        path
+                    },
+                });
             }
         }
 
-        SingleSource {
-            graph: self,
-            source,
-            distances,
-            predecessors,
-        }
-    }
-}
-
-struct SingleSource<'a> {
-    graph: &'a Graph,
-    source: Node,
-    distances: HashMap<Node, usize>,
-    predecessors: HashMap<Node, Vec<Edge>>,
-}
-
-impl<'a> SingleSource<'a> {
-    /// Returns a shortest path from the source to the end.
-    ///
-    /// Note: there may be multiple paths with the same cost, so this function returns the first one found.
-    fn shortest_path(&self, end: Node) -> Option<Path> {
-        let mut path = Vec::new();
-        let mut node = end;
-        while node != self.source {
-            let edge = self.predecessors(node).first()?;
-            path.push(*edge);
-            node = edge.source;
-        }
-
-        path.reverse();
-        Some(Path(path))
-    }
-
-    /// Returns all shortest path from the source to the end.
-    fn shortest_paths(&self, end: Node) -> Option<Vec<Path>> {
-        let paths = self.shortest_paths_recursive(end, vec![]);
-        Some(paths.into_iter().map(Path).collect())
-    }
-
-    /// Recursively finds all shortest paths from the source to the end.
-    fn shortest_paths_recursive(&self, end: Node, path: Vec<Edge>) -> Vec<Vec<Edge>> {
-        if end == self.source {
-            return vec![path];
-        }
-
-        self.predecessors(end)
-            .iter()
-            .flat_map(|edge| {
-                let mut path = path.clone();
-                path.push(*edge);
-                self.shortest_paths_recursive(edge.source, path)
-            })
-            // .filter(|path| path.len() > 0)
-            .collect()
-    }
-
-    /// Gets the predecessors of a node.
-    fn predecessors(&self, node: Node) -> &[Edge] {
-        self.predecessors
-            .get(&node)
-            .map_or(&[], |edges| edges.as_slice())
-    }
-
-    fn cost_to(&self, node: Node) -> Option<usize> {
-        self.distances.get(&node).copied()
-    }
-}
-
-struct Path(Vec<Edge>);
-
-impl Path {
-    fn cost(&self) -> usize {
-        self.0.iter().map(|edge| edge.cost).sum()
+        (best, paths)
     }
 }
 
@@ -343,226 +269,5 @@ mod tests {
     fn part2_example2() {
         let input = include_str!("../../data/examples/2024/16/2.txt");
         assert_eq!(64, part2(input));
-    }
-
-    #[test]
-    fn cost() {
-        let path = Path(vec![
-            Edge {
-                source: Node {
-                    coordinate: Coordinate { x: 0, y: 0 },
-                    direction: Direction::Right,
-                },
-                target: Node {
-                    coordinate: Coordinate { x: 1, y: 0 },
-                    direction: Direction::Right,
-                },
-                cost: 1,
-            },
-            Edge {
-                source: Node {
-                    coordinate: Coordinate { x: 1, y: 0 },
-                    direction: Direction::Right,
-                },
-                target: Node {
-                    coordinate: Coordinate { x: 1, y: 0 },
-                    direction: Direction::Down,
-                },
-                cost: 1000,
-            },
-            Edge {
-                source: Node {
-                    coordinate: Coordinate { x: 1, y: 0 },
-                    direction: Direction::Down,
-                },
-                target: Node {
-                    coordinate: Coordinate { x: 1, y: 1 },
-                    direction: Direction::Down,
-                },
-                cost: 1,
-            },
-        ]);
-
-        assert_eq!(1002, path.cost());
-    }
-
-    fn test_graph() -> Graph {
-        let maze = r#"####
-#S.#
-#.E#
-####"#;
-
-        let maze = Maze::from_str(maze).unwrap();
-        Graph::from(&maze)
-    }
-
-    #[test]
-    fn cost_to() {
-        let graph = test_graph();
-        let search = graph.single_source(Node {
-            coordinate: Coordinate { x: 1, y: 1 },
-            direction: Direction::Right,
-        });
-
-        let actual = search.cost_to(Node {
-            coordinate: Coordinate { x: 1, y: 2 },
-            direction: Direction::Down,
-        });
-
-        assert_eq!(Some(1001), actual);
-    }
-
-    #[test]
-    fn shortest_path() {
-        let graph = test_graph();
-        let search = graph.single_source(Node {
-            coordinate: Coordinate { x: 1, y: 1 },
-            direction: Direction::Right,
-        });
-
-        let path = search.shortest_path(Node {
-            coordinate: Coordinate { x: 1, y: 2 },
-            direction: Direction::Down,
-        });
-
-        assert_eq!(
-            Some(vec![
-                Edge {
-                    source: Node {
-                        coordinate: Coordinate { x: 1, y: 1 },
-                        direction: Direction::Right,
-                    },
-                    target: Node {
-                        coordinate: Coordinate { x: 1, y: 1 },
-                        direction: Direction::Down,
-                    },
-                    cost: 1000,
-                },
-                Edge {
-                    source: Node {
-                        coordinate: Coordinate { x: 1, y: 1 },
-                        direction: Direction::Down,
-                    },
-                    target: Node {
-                        coordinate: Coordinate { x: 1, y: 2 },
-                        direction: Direction::Down,
-                    },
-                    cost: 1,
-                }
-            ]),
-            path.map(|path| path.0)
-        );
-    }
-
-    #[test]
-    fn shortest_paths() {
-        let graph = test_graph();
-        let search = graph.single_source(Node {
-            coordinate: Coordinate { x: 1, y: 1 },
-            direction: Direction::Right,
-        });
-
-        let paths = search.shortest_paths(Node {
-            coordinate: Coordinate { x: 2, y: 2 },
-            direction: Direction::Down,
-        });
-
-        assert_eq!(
-            Some(vec![
-                vec![
-                    Edge {
-                        source: Node {
-                            coordinate: Coordinate { x: 1, y: 1 },
-                            direction: Direction::Right,
-                        },
-                        target: Node {
-                            coordinate: Coordinate { x: 1, y: 1 },
-                            direction: Direction::Down,
-                        },
-                        cost: 1000,
-                    },
-                    Edge {
-                        source: Node {
-                            coordinate: Coordinate { x: 1, y: 1 },
-                            direction: Direction::Down,
-                        },
-                        target: Node {
-                            coordinate: Coordinate { x: 1, y: 2 },
-                            direction: Direction::Down,
-                        },
-                        cost: 1,
-                    },
-                    Edge {
-                        source: Node {
-                            coordinate: Coordinate { x: 1, y: 2 },
-                            direction: Direction::Down,
-                        },
-                        target: Node {
-                            coordinate: Coordinate { x: 1, y: 2 },
-                            direction: Direction::Right,
-                        },
-                        cost: 1000,
-                    },
-                    Edge {
-                        source: Node {
-                            coordinate: Coordinate { x: 1, y: 2 },
-                            direction: Direction::Right,
-                        },
-                        target: Node {
-                            coordinate: Coordinate { x: 2, y: 2 },
-                            direction: Direction::Right,
-                        },
-                        cost: 1,
-                    },
-                ],
-                vec![
-                    Edge {
-                        source: Node {
-                            coordinate: Coordinate { x: 1, y: 1 },
-                            direction: Direction::Right,
-                        },
-                        target: Node {
-                            coordinate: Coordinate { x: 2, y: 1 },
-                            direction: Direction::Right,
-                        },
-                        cost: 1,
-                    },
-                    Edge {
-                        source: Node {
-                            coordinate: Coordinate { x: 2, y: 1 },
-                            direction: Direction::Right,
-                        },
-                        target: Node {
-                            coordinate: Coordinate { x: 2, y: 1 },
-                            direction: Direction::Down,
-                        },
-                        cost: 1000,
-                    },
-                    Edge {
-                        source: Node {
-                            coordinate: Coordinate { x: 2, y: 1 },
-                            direction: Direction::Down,
-                        },
-                        target: Node {
-                            coordinate: Coordinate { x: 2, y: 2 },
-                            direction: Direction::Down,
-                        },
-                        cost: 1,
-                    },
-                    Edge {
-                        source: Node {
-                            coordinate: Coordinate { x: 2, y: 2 },
-                            direction: Direction::Down,
-                        },
-                        target: Node {
-                            coordinate: Coordinate { x: 2, y: 2 },
-                            direction: Direction::Right,
-                        },
-                        cost: 1000,
-                    },
-                ]
-            ]),
-            paths.map(|paths| paths.into_iter().map(|path| path.0).collect())
-        );
     }
 }

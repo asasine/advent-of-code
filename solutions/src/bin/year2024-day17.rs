@@ -146,7 +146,9 @@ impl ChronospatialComputer {
 
     fn find_part2(&self) -> u64 {
         let a = self
-            .find_part2_impl_recursive(0, self.program.len() - 1)
+            // .find_part2_impl_recursive(0, self.program.len() - 1)
+            .find_part2_impl_recursive2(0, self.program.len() - 1, 0)
+            // .find_part2_impl_stack()
             .expect("No solution found");
 
         let mut computer = self.clone();
@@ -166,6 +168,48 @@ impl ChronospatialComputer {
                 return Some(a);
             } else if let Some(a) = self.find_part2_impl_recursive(a, byte_to_check - 1) {
                 return Some(a);
+            }
+        }
+
+        None
+    }
+
+    fn find_part2_impl_recursive2(&self, a: u64, byte_to_check: usize, nibble: u64) -> Option<u64> {
+        if nibble == 8 {
+            return None;
+        }
+
+        let a = (a << 3) | nibble;
+        let byte = self.execute_until_output(&mut 0, &mut Registers { a, b: 0, c: 0 });
+        if byte.is_none_or(|byte| byte != self.program[byte_to_check]) {
+            return self.find_part2_impl_recursive2(a, byte_to_check, nibble + 1);
+        } else if byte_to_check == 0 {
+            return Some(a);
+        } else if let Some(a) = self.find_part2_impl_recursive2(a, byte_to_check - 1, 0) {
+            return Some(a);
+        } else {
+            return self.find_part2_impl_recursive2(a, byte_to_check, nibble + 1);
+        }
+    }
+
+    /// An implementation of [`ChronospatialComputer::find_part2_impl_recursive`] using a stack instead of recursion.
+    fn find_part2_impl_stack(&self) -> Option<u64> {
+        let mut stack = Vec::new();
+        stack.push((0, 0, 0)); // (a, byte_to_check, nibble)
+
+        while let Some((a, byte_to_check, nibble)) = stack.pop() {
+            let a = (a << 3) | nibble;
+            let byte = self.execute_until_output(&mut 0, &mut Registers { a, b: 0, c: 0 });
+            if byte.is_none_or(|byte| byte != self.program[byte_to_check]) {
+                if nibble == 7 {
+                    break;
+                } else {
+                    stack.push((a, byte_to_check, nibble + 1));
+                }
+            } else if byte_to_check == 0 {
+                return Some(a);
+            } else {
+                stack.push((a, byte_to_check - 1, 0));
             }
         }
 

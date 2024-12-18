@@ -12,6 +12,7 @@ pub fn read_stdin() -> String {
     input
 }
 
+pub mod graph;
 pub mod grid;
 
 pub mod num {

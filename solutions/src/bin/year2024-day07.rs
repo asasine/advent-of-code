@@ -6,6 +6,7 @@ use core::fmt;
 use std::str::FromStr;
 
 use itertools::Itertools;
+use tracing::trace;
 
 #[derive(Debug, Clone)]
 struct IncompleteEquation {
@@ -56,7 +57,7 @@ impl IncompleteEquation {
                 operators: ops.iter().map(|op| **op).collect(),
             };
 
-            // eprintln!("candidate: {equation}");
+            trace!("candidate: {equation}");
             if equation.is_valid() {
                 return Some(equation);
             }

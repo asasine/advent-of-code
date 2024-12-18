@@ -171,9 +171,39 @@ fn aoc_solution_impl(attr: pm2::TokenStream, item: pm2::TokenStream) -> pm2::Tok
 pub fn aoc_main(_input: pm::TokenStream) -> pm::TokenStream {
     quote! {
         fn main() {
+            let max_level = if cfg!(debug_assertions) {
+                ::tracing::Level::TRACE
+            } else {
+                ::tracing::Level::DEBUG
+            };
+
+            use ::std::io::IsTerminal;
+            let subscriber = ::tracing_subscriber::FmtSubscriber::builder()
+                .with_max_level(max_level)
+                .with_ansi(::std::io::stderr().is_terminal())
+                .with_writer(::std::io::stderr)
+                .without_time()
+                .with_target(false)
+                .finish();
+
+            ::tracing::subscriber::set_global_default(subscriber)
+                .expect("setting default subscriber failed");
+
+            let mut start = ::std::time::Instant::now();
             let input = solutions::read_stdin();
+            let reading = start.elapsed();
+
+            start = ::std::time::Instant::now();
             println!("{}", part1(&input));
+            let part1_time = start.elapsed();
+
+            start = ::std::time::Instant::now();
             println!("{}", part2(&input));
+            let part2_time = start.elapsed();
+
+            ::tracing::debug!("Reading stdin: {:?}", reading);
+            ::tracing::debug!("Part 1: {:?}", part1_time);
+            ::tracing::debug!("Part 2: {:?}", part2_time);
         }
     }
     .into()

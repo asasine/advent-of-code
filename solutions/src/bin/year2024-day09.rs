@@ -6,6 +6,7 @@ use core::fmt;
 use std::{collections::HashSet, str::FromStr};
 
 use itertools::Itertools;
+use tracing::trace;
 
 fn part1(input: &str) -> usize {
     let dense = DenseDiskMap::from_str(input).unwrap();
@@ -151,7 +152,7 @@ impl DenseDiskMap {
             let block_size = match end_block {
                 DenseBlock::File { size, .. } => *size,
                 b @ DenseBlock::FreeSpace(_) => {
-                    eprintln!("Skipping free space block {b:?} at end {end}");
+                    trace!("Skipping free space block {b:?} at end {end}");
                     end -= 1;
                     continue;
                 }
@@ -168,7 +169,7 @@ impl DenseDiskMap {
                 }) {
                     Some(x) => x,
                     None => {
-                        eprintln!("No free space block found that can fit {end_block:?} at {end}");
+                        trace!("No free space block found that can fit {end_block:?} at {end}");
                         end -= 1;
                         continue;
                     }
@@ -180,9 +181,7 @@ impl DenseDiskMap {
             }
 
             // split the start block into {block_size, remaining} and swap the first with the end block
-            eprintln!(
-                "Inserting {end_block:?} from {end} into {free_block:?} at {free_block_index}"
-            );
+            trace!("Inserting {end_block:?} from {end} into {free_block:?} at {free_block_index}");
 
             let free_size = match free_block {
                 DenseBlock::FreeSpace(size) => size,
@@ -205,7 +204,7 @@ impl DenseDiskMap {
                 // end now points to the free space block that was just swapped, so decrement to check the next block
                 end -= 1;
             } else {
-                eprintln!(
+                trace!(
                     "Splitting {free_block:?} block at {free_block_index} into {block_size} and {remaining}"
                 );
 

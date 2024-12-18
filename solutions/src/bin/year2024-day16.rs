@@ -10,11 +10,12 @@ use std::{
 
 use itertools::Itertools;
 use solutions::grid::{Coordinate, Direction, Grid};
+use tracing::debug;
 
 fn part1(input: &str) -> usize {
     let maze = Maze::from_str(input).unwrap();
     let graph = Graph::from(&maze);
-    eprintln!(
+    debug!(
         "Graph with {} nodes and {} edges",
         graph.0.len(),
         graph.0.values().map(|edges| edges.len()).sum::<usize>()

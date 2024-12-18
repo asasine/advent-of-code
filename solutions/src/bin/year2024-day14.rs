@@ -7,6 +7,7 @@ use std::{collections::HashMap, str::FromStr};
 
 use itertools::Itertools;
 use nalgebra::Vector2;
+use tracing::{debug, trace};
 
 fn part1(input: &str) -> usize {
     part1_impl::<101, 103>(input)
@@ -15,7 +16,7 @@ fn part1(input: &str) -> usize {
 fn part1_impl<const WIDTH: usize, const HEIGHT: usize>(input: &str) -> usize {
     let mut grid: WrappingGrid<WIDTH, HEIGHT> = input.parse().unwrap();
     grid.step_n(100);
-    eprintln!("{}", grid);
+    debug!("{}", grid);
     grid.safety_factor()
 }
 
@@ -25,7 +26,7 @@ fn part2(input: &str) -> usize {
     let tree_probably = (0usize..(101 * 103))
         .map(|i| {
             grid.step();
-            // eprintln!("{}:\n{}\n", i, grid);
+            trace!("{}:\n{}\n", i, grid);
             (i + 1, grid.safety_factor())
         })
         .sorted_by_key(|(_, safety_factor)| *safety_factor)
@@ -34,7 +35,7 @@ fn part2(input: &str) -> usize {
         .0;
 
     original_grid.step_n(tree_probably);
-    eprintln!("{}", original_grid);
+    debug!("{}", original_grid);
     tree_probably
 }
 

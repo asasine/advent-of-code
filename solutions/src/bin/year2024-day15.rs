@@ -6,17 +6,18 @@ use core::fmt;
 use std::str::FromStr;
 
 use solutions::grid::{Coordinate, Direction, Grid};
+use tracing::{debug, trace};
 
 fn part1(input: &str) -> usize {
     let mut warehouse = Warehouse::from_str(input).unwrap();
-    eprintln!("{}", warehouse.grid);
+    debug!("{}", warehouse.grid);
     warehouse.simulate();
     warehouse.sum_box_gps()
 }
 
 fn part2(input: &str) -> usize {
     let mut warehouse = Warehouse::from_str(input).unwrap().into_part2();
-    eprintln!("{}", warehouse.grid);
+    debug!("{}", warehouse.grid);
     warehouse.simulate();
     warehouse.sum_box_gps()
 }
@@ -182,10 +183,10 @@ impl WarehouseGrid {
     /// Tries to move the robot in the given direction, shifting any boxes in the direction if possible. Returns the robots new coordinate.
     fn try_move_robot(&mut self, robot_coordinate: Coordinate, direction: Direction) -> Coordinate {
         // find the first empty or wall cell from the robot in the direction of the move
-        // eprintln!("Move: {direction:?}");
+        trace!("Move: {direction:?}");
         if self.can_move(robot_coordinate, direction) {
             self.shift(robot_coordinate, direction);
-            // eprintln!("{}", self);
+            trace!("{}", self);
             robot_coordinate.try_move(direction).unwrap()
         } else {
             // the robot cannot move

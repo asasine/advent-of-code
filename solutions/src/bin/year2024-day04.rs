@@ -4,6 +4,7 @@
 
 use itertools::Itertools;
 use solutions::grid::{Coordinate, Direction, Grid};
+use tracing::trace;
 
 fn part1(input: &str) -> usize {
     let grid = input.parse::<Grid<char>>().unwrap();
@@ -87,7 +88,7 @@ impl WordSearch {
             .enumerate()
             .filter(|(_, &c)| c == first_letter)
             .map(|(coordinate, _)| {
-                // eprintln!("{coordinate}");
+                trace!("{coordinate}");
                 self.count_words_at(word, coordinate)
             })
             .sum()
@@ -100,42 +101,42 @@ impl WordSearch {
         let mut count = 0;
 
         if self.check_word_horizontal(word, coordinate) {
-            eprintln!("Found horizontal at {coordinate}");
+            trace!("Found horizontal at {coordinate}");
             count += 1;
         }
 
         if self.check_word_horizontal_reverse(word, coordinate) {
-            eprintln!("Found horizontal reverse at {coordinate}");
+            trace!("Found horizontal reverse at {coordinate}");
             count += 1;
         }
 
         if self.check_word_vertical(word, coordinate) {
-            eprintln!("Found vertical at {coordinate}");
+            trace!("Found vertical at {coordinate}");
             count += 1;
         }
 
         if self.check_word_vertical_reverse(word, coordinate) {
-            eprintln!("Found vertical reverse at {coordinate}");
+            trace!("Found vertical reverse at {coordinate}");
             count += 1;
         }
 
         if self.check_word_diagonal_down(word, coordinate) {
-            eprintln!("Found diagonal down at {coordinate}");
+            trace!("Found diagonal down at {coordinate}");
             count += 1;
         }
 
         if self.check_word_diagonal_down_reverse(word, coordinate) {
-            eprintln!("Found diagonal down reverse at {coordinate}");
+            trace!("Found diagonal down reverse at {coordinate}");
             count += 1;
         }
 
         if self.check_word_diagonal_up(word, coordinate) {
-            eprintln!("Found diagonal up at {coordinate}");
+            trace!("Found diagonal up at {coordinate}");
             count += 1;
         }
 
         if self.check_word_diagonal_up_reverse(word, coordinate) {
-            eprintln!("Found diagonal up reverse at {coordinate}");
+            trace!("Found diagonal up reverse at {coordinate}");
             count += 1;
         }
 

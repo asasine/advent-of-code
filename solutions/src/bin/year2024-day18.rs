@@ -11,6 +11,7 @@ use std::{
 
 use itertools::Itertools;
 use solutions::grid::{Coordinate, Grid};
+use tracing::trace;
 
 fn part1(input: &str) -> u64 {
     part1_impl::<71>(input, 1024)
@@ -18,10 +19,10 @@ fn part1(input: &str) -> u64 {
 
 fn part1_impl<const SIZE: usize>(input: &str, steps: usize) -> u64 {
     let mut memory_space: MemorySpace<SIZE> = input.parse().unwrap();
-    eprintln!("{}", memory_space);
+    trace!("{}", memory_space);
 
     memory_space.simulate(steps);
-    eprintln!("{}", memory_space);
+    trace!("{}", memory_space);
 
     let start = Coordinate { x: 0, y: 0 };
     let end = Coordinate {
@@ -126,18 +127,18 @@ impl<const SIZE: usize> MemorySpace<SIZE> {
             coordinate: u,
         })) = queue.pop()
         {
-            eprintln!("Visiting {:?}", u);
+            trace!("Visiting {:?}", u);
             if end == Some(u) {
                 break;
             }
 
             let current_distance = distances[&u];
             for v in self.adjacencies(u) {
-                eprintln!("  Adjacent: {:?}", v);
+                trace!("  Adjacent: {:?}", v);
                 let alt = current_distance + 1;
                 let dist_v = distances.entry(v).or_insert(u64::MAX);
                 if alt < *dist_v {
-                    eprintln!("    Found a shorter distance at {}", alt);
+                    trace!("    Found a shorter distance at {}", alt);
                     predecessors.insert(v, u);
                     *dist_v = alt;
                     queue.push(Reverse(State {
@@ -165,15 +166,15 @@ impl<const SIZE: usize> MemorySpace<SIZE> {
 
         for coordinate in &self.falling_bytes {
             memory_space.simulate(1);
-            eprintln!("Simulated {}ns with {}", memory_space.time, coordinate);
+            trace!("Simulated {}ns with {}", memory_space.time, coordinate);
             if dijkstra_result.predecessors(end).contains(coordinate) {
                 // the current best path was blocked by the falling byte, so we need to recompute
-                eprintln!("Recomputing path after falling byte at {}", coordinate);
+                trace!("Recomputing path after falling byte at {}", coordinate);
                 dijkstra_result = memory_space.dijkstra(start, Some(end));
             }
 
             if !dijkstra_result.reachable(end) {
-                eprintln!("Found a blocking byte at {}", coordinate);
+                trace!("Found a blocking byte at {}", coordinate);
                 return *coordinate;
             }
         }
@@ -211,8 +212,9 @@ impl<const SIZE: usize> FromStr for MemorySpace<SIZE> {
 
 impl<const SIZE: usize> fmt::Display for MemorySpace<SIZE> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Grid at {}ns:", self.time)?;
         writeln!(f, "{}", self.grid)?;
-        writeln!(f, "\nFalling bytes:")?;
+        writeln!(f, "Remaining bytes to fall, in order:")?;
         for fb in self.falling_bytes.iter().skip(self.time) {
             writeln!(f, "{}", fb)?;
         }

@@ -9,6 +9,7 @@ use itertools::Itertools;
 use nalgebra::Point2;
 
 use solutions::grid::{Coordinate, Grid};
+use tracing::debug;
 
 fn part1(input: &str) -> usize {
     let grid = input.parse::<Grid<Cell>>().unwrap();
@@ -16,18 +17,16 @@ fn part1(input: &str) -> usize {
     println!("{}", city.grid);
 
     let antinodes = city.get_first_antinodes();
-    eprintln!("With first antinodes:");
-    eprintln!("{}", antinodes);
+    debug!("With first antinodes:\n{}", antinodes);
     antinodes.distinct_in_bounds().len()
 }
 
 fn part2(input: &str) -> usize {
     let grid = input.parse::<Grid<Cell>>().unwrap();
     let city = City::from_grid(grid);
-    eprintln!("{}", city.grid);
+    debug!("{}", city.grid);
     let antinodes = city.get_all_antinodes();
-    eprintln!("With all antinodes:");
-    eprintln!("{}", antinodes);
+    debug!("With all antinodes:\n{}", antinodes);
     antinodes.distinct_in_bounds().len()
 }
 

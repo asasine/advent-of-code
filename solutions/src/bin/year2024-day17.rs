@@ -5,10 +5,11 @@
 use std::str::FromStr;
 
 use itertools::Itertools;
+use tracing::debug;
 
 fn part1(input: &str) -> String {
     let mut computer: ChronospatialComputer = input.parse().unwrap();
-    eprintln!("{:?}", computer);
+    debug!("{:?}", computer);
     let output = computer.output();
     output.into_iter().join(",")
 }

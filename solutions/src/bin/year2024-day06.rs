@@ -6,6 +6,7 @@ use core::fmt;
 use std::collections::{HashMap, HashSet};
 
 use solutions::grid::Direction;
+use tracing::debug;
 
 fn part1(input: &str) -> usize {
     part1_impl::<130>(input)
@@ -19,7 +20,7 @@ fn part1_impl<const N: usize>(input: &str) -> usize {
         visited,
     };
 
-    eprintln!("{}", grid);
+    debug!("{}", grid);
     grid.get_visited_coordinates().len()
 }
 

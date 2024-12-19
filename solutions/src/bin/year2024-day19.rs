@@ -30,20 +30,30 @@ fn part1(input: &str) -> usize {
 
 #[instrument(skip(input), level = "debug")]
 fn part2(input: &str) -> usize {
+    combined(input).1
+}
+
+/// Returns the number of designs that can be made from the towels available and the total number of design permutations.
+fn combined(input: &str) -> (usize, usize) {
     let mut lines = input.lines();
     let patterns = lines.next().unwrap().split(", ").collect_vec();
     lines.next(); // section break
 
     let designs = lines.map(str::trim);
-    let mut cache = HashMap::new();
-    
-
-    designs
+    let mut cache = HashMap::with_capacity(19000);
+    let (possible, count) = designs
         .map(|design| {
             trace!("Checking design: {}", design);
-            dfs(design, &patterns, &mut cache)
+            let res = dfs(design, &patterns, &mut cache);
+            trace!("Design: {}, Count: {}", design, res);
+            res
         })
-        .sum()
+        .map(|count| (count > 0, count))
+        .fold((0, 0), |(part1, part2), (part1_count, part2_count)| {
+            (part1 + part1_count as usize, part2 + part2_count)
+        });
+
+    (possible, count)
 }
 
 fn dfs<'a>(line: &'a str, patterns: &[&str], cache: &mut HashMap<&'a str, usize>) -> usize {

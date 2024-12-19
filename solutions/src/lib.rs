@@ -12,6 +12,26 @@ pub fn read_stdin() -> String {
     input
 }
 
+/// Sets up the tracing subscriber for logging.
+pub fn setup_tracing() {
+    let max_level = if cfg!(debug_assertions) {
+        ::tracing::Level::TRACE
+    } else {
+        ::tracing::Level::DEBUG
+    };
+
+    use ::std::io::IsTerminal;
+    let subscriber = ::tracing_subscriber::FmtSubscriber::builder()
+        .with_max_level(max_level)
+        .with_ansi(::std::io::stderr().is_terminal())
+        .with_writer(::std::io::stderr)
+        .with_target(false)
+        .finish();
+
+    ::tracing::subscriber::set_global_default(subscriber)
+        .expect("setting default subscriber failed");
+}
+
 pub mod grid;
 
 pub mod num {

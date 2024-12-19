@@ -162,7 +162,7 @@ fn aoc_solution_impl(attr: pm2::TokenStream, item: pm2::TokenStream) -> pm2::Tok
 /// they have the signature `fn foo(input: &str) -> usize`.
 ///
 /// ```
-/// # mod solutions { pub fn read_stdin() -> String { String::new() } }
+/// # mod solutions { pub fn read_stdin() -> String { String::new() } pub fn setup_tracing() { } }
 /// # fn part1(input: &str) -> usize { 0 }
 /// # fn part2(input: &str) -> usize { 0 }
 /// aoc_macro::aoc_main!();
@@ -171,23 +171,7 @@ fn aoc_solution_impl(attr: pm2::TokenStream, item: pm2::TokenStream) -> pm2::Tok
 pub fn aoc_main(_input: pm::TokenStream) -> pm::TokenStream {
     quote! {
         fn main() {
-            let max_level = if cfg!(debug_assertions) {
-                ::tracing::Level::TRACE
-            } else {
-                ::tracing::Level::DEBUG
-            };
-
-            use ::std::io::IsTerminal;
-            let subscriber = ::tracing_subscriber::FmtSubscriber::builder()
-                .with_max_level(max_level)
-                .with_ansi(::std::io::stderr().is_terminal())
-                .with_writer(::std::io::stderr)
-                .without_time()
-                .with_target(false)
-                .finish();
-
-            ::tracing::subscriber::set_global_default(subscriber)
-                .expect("setting default subscriber failed");
+            solutions::setup_tracing();
 
             let mut start = ::std::time::Instant::now();
             let input = solutions::read_stdin();

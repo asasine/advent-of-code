@@ -7,8 +7,9 @@ use std::{collections::HashMap, str::FromStr};
 
 use itertools::Itertools;
 use nalgebra::Vector2;
-use tracing::{debug, trace};
+use tracing::{debug, instrument, trace};
 
+#[instrument(skip(input), level = "debug")]
 fn part1(input: &str) -> usize {
     part1_impl::<101, 103>(input)
 }
@@ -20,6 +21,7 @@ fn part1_impl<const WIDTH: usize, const HEIGHT: usize>(input: &str) -> usize {
     grid.safety_factor()
 }
 
+#[instrument(skip(input), level = "debug")]
 fn part2(input: &str) -> usize {
     let mut original_grid: WrappingGrid<101, 103> = input.parse().unwrap();
     let mut grid = original_grid.clone();
@@ -39,7 +41,9 @@ fn part2(input: &str) -> usize {
     tree_probably
 }
 
-aoc_macro::aoc_main!();
+fn main() {
+    solutions::main(part1, part2)
+}
 
 type Vector2i = Vector2<i64>;
 

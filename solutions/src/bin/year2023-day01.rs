@@ -3,8 +3,10 @@
 //! https://adventofcode.com/2023/day/1
 
 use regex::Regex;
+use tracing::instrument;
 
-pub fn part1(input: &str) -> usize {
+#[instrument(skip(input), level = "debug")]
+fn part1(input: &str) -> usize {
     input
         .lines()
         .filter(|line| !line.is_empty())
@@ -23,7 +25,8 @@ pub fn part1(input: &str) -> usize {
         .sum()
 }
 
-pub fn part2(input: &str) -> usize {
+#[instrument(skip(input), level = "debug")]
+fn part2(input: &str) -> usize {
     let re = Regex::new(r"zero|one|two|three|four|five|six|seven|eight|nine|\d").unwrap();
     fn match_to_digit(m: &regex::Match) -> usize {
         match m.as_str() {
@@ -66,7 +69,9 @@ pub fn part2(input: &str) -> usize {
         .sum()
 }
 
-aoc_macro::aoc_main!();
+fn main() {
+    solutions::main(part1, part2)
+}
 
 #[cfg(test)]
 mod tests {

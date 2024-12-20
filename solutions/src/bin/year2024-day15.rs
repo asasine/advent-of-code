@@ -6,8 +6,9 @@ use core::fmt;
 use std::str::FromStr;
 
 use solutions::grid::{Coordinate, Direction, Grid};
-use tracing::{debug, trace};
+use tracing::{debug, instrument, trace};
 
+#[instrument(skip(input), level = "debug")]
 fn part1(input: &str) -> usize {
     let mut warehouse = Warehouse::from_str(input).unwrap();
     debug!("{}", warehouse.grid);
@@ -15,6 +16,7 @@ fn part1(input: &str) -> usize {
     warehouse.sum_box_gps()
 }
 
+#[instrument(skip(input), level = "debug")]
 fn part2(input: &str) -> usize {
     let mut warehouse = Warehouse::from_str(input).unwrap().into_part2();
     debug!("{}", warehouse.grid);
@@ -22,7 +24,9 @@ fn part2(input: &str) -> usize {
     warehouse.sum_box_gps()
 }
 
-aoc_macro::aoc_main!();
+fn main() {
+    solutions::main(part1, part2)
+}
 
 #[derive(Debug, Clone, Copy)]
 enum Cell {

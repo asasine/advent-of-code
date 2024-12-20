@@ -10,7 +10,9 @@ use std::{
 
 use itertools::Itertools;
 use solutions::grid::{Coordinate, Grid};
+use tracing::instrument;
 
+#[instrument(skip(input), level = "debug")]
 fn part1(input: &str) -> usize {
     let grid = Grid::<Plot>::from_str(input).unwrap();
     let garden = Garden { grid };
@@ -18,6 +20,7 @@ fn part1(input: &str) -> usize {
     fencing.values().map(|f| f.price()).sum()
 }
 
+#[instrument(skip(input), level = "debug")]
 fn part2(input: &str) -> usize {
     let grid = Grid::<Plot>::from_str(input).unwrap();
     let garden = Garden { grid };
@@ -25,7 +28,9 @@ fn part2(input: &str) -> usize {
     fencing.values().map(|f| f.bulk_price()).sum()
 }
 
-aoc_macro::aoc_main!();
+fn main() {
+    solutions::main(part1, part2)
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Plot(char);

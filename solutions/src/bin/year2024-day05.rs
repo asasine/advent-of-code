@@ -2,6 +2,9 @@
 //!
 //! https://adventofcode.com/2024/day/5
 
+use tracing::instrument;
+
+#[instrument(skip(input), level = "debug")]
 fn part1(input: &str) -> usize {
     let (rules, updates) = parse_input(input);
     let rules = Rules::<100>::from_rules(&rules);
@@ -91,6 +94,7 @@ impl Update {
     }
 }
 
+#[instrument(skip(input), level = "debug")]
 fn part2(input: &str) -> usize {
     let (rules, updates) = parse_input(input);
     let rules = Rules::<100>::from_rules(&rules);
@@ -102,7 +106,9 @@ fn part2(input: &str) -> usize {
         .sum()
 }
 
-aoc_macro::aoc_main!();
+fn main() {
+    solutions::main(part1, part2)
+}
 
 #[cfg(test)]
 mod tests {

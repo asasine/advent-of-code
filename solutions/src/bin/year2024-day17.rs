@@ -5,8 +5,9 @@
 use std::str::FromStr;
 
 use itertools::Itertools;
-use tracing::debug;
+use tracing::{debug, instrument};
 
+#[instrument(skip(input), level = "debug")]
 fn part1(input: &str) -> String {
     let mut computer: ChronospatialComputer = input.parse().unwrap();
     debug!("{:?}", computer);
@@ -14,12 +15,15 @@ fn part1(input: &str) -> String {
     output.into_iter().join(",")
 }
 
+#[instrument(skip(input), level = "debug")]
 fn part2(input: &str) -> u64 {
     let computer = ChronospatialComputer::from_str(input).unwrap();
     computer.find_part2()
 }
 
-aoc_macro::aoc_main!();
+fn main() {
+    solutions::main(part1, part2)
+}
 
 #[derive(Debug, Clone)]
 struct ChronospatialComputer {

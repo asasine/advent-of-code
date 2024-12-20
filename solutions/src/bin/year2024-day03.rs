@@ -3,7 +3,9 @@
 //! https://adventofcode.com/2024/day/3
 
 use regex::Regex;
+use tracing::instrument;
 
+#[instrument(skip(input), level = "debug")]
 fn part1(input: &str) -> usize {
     let re = Regex::new(r"mul\((\d{1,3}),(\d{1,3})\)").unwrap();
     re.captures_iter(input)
@@ -29,6 +31,7 @@ fn parse_number(cap: &regex::Captures, name: &str) -> usize {
         .unwrap_or(0)
 }
 
+#[instrument(skip(input), level = "debug")]
 fn part2(input: &str) -> usize {
     let re =
         Regex::new(r"(?<do>do\(\))|(?<dont>don't\(\))|(?<mul>mul\((?<x>\d{1,3}),(?<y>\d{1,3})\))")
@@ -67,7 +70,9 @@ enum Instruction {
     Mul(usize, usize),
 }
 
-aoc_macro::aoc_main!();
+fn main() {
+    solutions::main(part1, part2)
+}
 
 #[cfg(test)]
 mod tests {

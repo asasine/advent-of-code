@@ -4,10 +4,10 @@
 
 use std::{collections::HashMap, str::FromStr};
 
-use itertools::Itertools;
 use solutions::grid::{Coordinate, Grid};
 use tracing::{debug, instrument, trace};
 
+#[instrument(skip(input), level = "debug")]
 fn part1(input: &str) -> usize {
     part1_impl(input, 100)
 }
@@ -18,11 +18,11 @@ fn part1_impl(input: &str, min_savings: usize) -> usize {
         Cheat {
             picoseconds: 2,
             min_savings,
-            rule: CheatRule::Exactly,
         },
     )
 }
 
+#[instrument(skip(input), level = "debug")]
 fn part2(input: &str) -> usize {
     part2_impl(input, 100)
 }
@@ -33,7 +33,6 @@ fn part2_impl(input: &str, min_savings: usize) -> usize {
         Cheat {
             picoseconds: 20,
             min_savings,
-            rule: CheatRule::AtMost,
         },
     )
 }
@@ -43,7 +42,9 @@ fn count_cheats(input: &str, cheat: Cheat) -> usize {
     grid.count_cheat_edges(&cheat)
 }
 
-aoc_macro::aoc_main!();
+fn main() {
+    solutions::main(part1, part2)
+}
 
 struct Racetrack {
     /// The path from the start to the end.
@@ -61,6 +62,7 @@ impl FromStr for Racetrack {
             grid.extent().width(),
             grid.extent().height()
         );
+
         let start = grid
             .enumerate()
             .find_map(|(coord, cell)| {
@@ -104,8 +106,9 @@ impl FromStr for Racetrack {
 }
 
 impl Racetrack {
-    #[instrument(skip(grid))]
+    #[instrument(skip(grid), level = "debug")]
     fn find_track(grid: Grid<Cell>, start: Coordinate, end: Coordinate) -> Vec<Coordinate> {
+        trace!("Finding track from {:?} to {:?}", start, end);
         let mut path = vec![];
         let mut current = start;
         let mut previous = start;
@@ -132,55 +135,39 @@ impl Racetrack {
 
         trace!("End at {:?}", current);
         path.push(end);
+
+        trace!("Found path with {} cells", path.len());
         path
     }
 
-    /// Finds pairs of edges that are two steps apart.
-    fn potential_cheat_edges(&self, cheat: &Cheat) -> Vec<((Coordinate, Coordinate), usize)> {
-        self.track
-            .iter()
-            .tuple_combinations()
-            .filter_map(|(&u, &v)| {
-                let manhattan = u.manhattan(v);
-                let valid = match cheat.rule {
-                    CheatRule::Exactly => manhattan == cheat.picoseconds,
-                    CheatRule::AtMost => manhattan <= cheat.picoseconds,
-                };
-
-                if valid {
-                    Some(((u, v), manhattan))
-                } else {
-                    None
-                }
-            })
-            .collect()
-    }
-
     /// Counts pairs of edges that can be used to cheat.
+    #[instrument(skip_all, level = "debug")]
     fn count_cheat_edges(&self, cheat: &Cheat) -> usize {
-        let potential_cheat_edges = self.potential_cheat_edges(cheat);
-        trace!(
-            "Found {} potential cheat edges",
-            potential_cheat_edges.len()
-        );
+        let mut count = 0;
+        for (i, &u) in self.track.iter().enumerate() {
+            if i + 2 >= self.track.len() {
+                break;
+            }
 
-        potential_cheat_edges
-            .into_iter()
-            .filter_map(|((u, v), manhattan)| {
-                trace!("Checking {} -> {}", u, v);
-                let u_to_end = self.distances_to_end[&u];
-                let v_to_end = self.distances_to_end[&v];
+            for &v in &self.track[i + 2..] {
+                let manhattan = u.manhattan(v);
+                let valid = manhattan <= cheat.picoseconds;
+                if valid {
+                    trace!("Checking {} -> {}", u, v);
+                    let u_to_end = self.distances_to_end[&u];
+                    let v_to_end = self.distances_to_end[&v];
 
-                trace!("Distances to end: {} -> {} = {}", u, self.end, u_to_end);
-                trace!("Distances to end: {} -> {} = {}", v, self.end, v_to_end);
+                    trace!("Distances to end: {} -> {} = {}", u, self.end, u_to_end);
+                    trace!("Distances to end: {} -> {} = {}", v, self.end, v_to_end);
 
-                let savings = u_to_end.checked_sub(v_to_end)?.checked_sub(manhattan)?;
+                    if v_to_end + manhattan + cheat.min_savings <= u_to_end {
+                        count += 1;
+                    }
+                }
+            }
+        }
 
-                trace!("Savings: {}", savings);
-                Some(((u, v), savings))
-            })
-            .filter(|(_, savings)| savings >= &cheat.min_savings)
-            .count()
+        count
     }
 }
 
@@ -214,15 +201,9 @@ impl TryFrom<char> for Cell {
     }
 }
 
-enum CheatRule {
-    Exactly,
-    AtMost,
-}
-
 struct Cheat {
     picoseconds: usize,
     min_savings: usize,
-    rule: CheatRule,
 }
 
 #[cfg(test)]

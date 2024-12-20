@@ -4,6 +4,9 @@
 
 use std::str::FromStr;
 
+use tracing::instrument;
+
+#[instrument(skip(input), level = "debug")]
 fn part1(input: &str) -> usize {
     MachinesParser::new(input)
         .filter_map(|m| m.solve())
@@ -11,6 +14,7 @@ fn part1(input: &str) -> usize {
         .sum()
 }
 
+#[instrument(skip(input), level = "debug")]
 fn part2(input: &str) -> usize {
     MachinesParser::new(input)
         .filter_map(|m| m.solve_with_offset(10_000_000_000_000))
@@ -18,7 +22,9 @@ fn part2(input: &str) -> usize {
         .sum()
 }
 
-aoc_macro::aoc_main!();
+fn main() {
+    solutions::main(part1, part2)
+}
 
 #[derive(Debug, PartialEq, Eq)]
 struct Button {

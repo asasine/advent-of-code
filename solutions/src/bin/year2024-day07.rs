@@ -6,7 +6,7 @@ use core::fmt;
 use std::str::FromStr;
 
 use itertools::Itertools;
-use tracing::trace;
+use tracing::{instrument, trace};
 
 #[derive(Debug, Clone)]
 struct IncompleteEquation {
@@ -149,6 +149,7 @@ impl fmt::Display for Operator {
     }
 }
 
+#[instrument(skip(input), level = "debug")]
 fn part1(input: &str) -> usize {
     let equations = input
         .lines()
@@ -162,6 +163,7 @@ fn part1(input: &str) -> usize {
         .sum()
 }
 
+#[instrument(skip(input), level = "debug")]
 fn part2(input: &str) -> usize {
     let equations = input
         .lines()
@@ -175,7 +177,9 @@ fn part2(input: &str) -> usize {
         .sum()
 }
 
-aoc_macro::aoc_main!();
+fn main() {
+    solutions::main(part1, part2)
+}
 
 #[cfg(test)]
 mod tests {

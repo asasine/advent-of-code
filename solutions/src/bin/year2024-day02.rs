@@ -3,8 +3,10 @@
 //! https://adventofcode.com/2024/day/2
 
 use itertools::Itertools;
+use tracing::instrument;
 
-pub fn part1(input: &str) -> usize {
+#[instrument(skip(input), level = "debug")]
+fn part1(input: &str) -> usize {
     input
         .lines()
         .map(|line| {
@@ -42,7 +44,8 @@ fn is_safe<'a>(levels: impl Iterator<Item = &'a usize>) -> bool {
         })
 }
 
-pub fn part2(input: &str) -> usize {
+#[instrument(skip(input), level = "debug")]
+fn part2(input: &str) -> usize {
     input
         .lines()
         .map(|line| {
@@ -75,7 +78,9 @@ fn is_safe_problem_dampener_naive(levels: &[usize]) -> bool {
     false
 }
 
-aoc_macro::aoc_main!();
+fn main() {
+    solutions::main(part1, part2)
+}
 
 #[cfg(test)]
 mod tests {

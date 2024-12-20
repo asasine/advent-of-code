@@ -9,8 +9,9 @@ use itertools::Itertools;
 use nalgebra::Point2;
 
 use solutions::grid::{Coordinate, Grid};
-use tracing::debug;
+use tracing::{debug, instrument};
 
+#[instrument(skip(input), level = "debug")]
 fn part1(input: &str) -> usize {
     let grid = input.parse::<Grid<Cell>>().unwrap();
     let city = City::from_grid(grid);
@@ -21,6 +22,7 @@ fn part1(input: &str) -> usize {
     antinodes.distinct_in_bounds().len()
 }
 
+#[instrument(skip(input), level = "debug")]
 fn part2(input: &str) -> usize {
     let grid = input.parse::<Grid<Cell>>().unwrap();
     let city = City::from_grid(grid);
@@ -234,7 +236,9 @@ impl City {
     }
 }
 
-aoc_macro::aoc_main!();
+fn main() {
+    solutions::main(part1, part2)
+}
 
 #[cfg(test)]
 mod tests {

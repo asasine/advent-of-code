@@ -6,8 +6,9 @@ use std::collections::HashMap;
 
 use itertools::Itertools;
 use regex::Regex;
-use tracing::{debug, trace};
+use tracing::{debug, instrument, trace};
 
+#[instrument(skip(input), level = "debug")]
 fn part1(input: &str) -> usize {
     let mut lines = input.lines();
     let mut patterns = lines.next().unwrap().split(", ");
@@ -27,6 +28,7 @@ fn part1(input: &str) -> usize {
         .count()
 }
 
+#[instrument(skip(input), level = "debug")]
 fn part2(input: &str) -> usize {
     let mut lines = input.lines();
     let patterns = lines.next().unwrap().split(", ").collect_vec();
@@ -65,7 +67,9 @@ fn dfs<'a>(line: &'a str, patterns: &[&str], cache: &mut HashMap<&'a str, usize>
     count
 }
 
-aoc_macro::aoc_main!();
+fn main() {
+    solutions::main(part1, part2)
+}
 
 #[cfg(test)]
 mod tests {

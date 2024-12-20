@@ -4,8 +4,9 @@
 
 use itertools::Itertools;
 use solutions::grid::{Coordinate, Direction, Grid};
-use tracing::trace;
+use tracing::{instrument, trace};
 
+#[instrument(skip(input), level = "debug")]
 fn part1(input: &str) -> usize {
     let grid = input.parse::<Grid<char>>().unwrap();
     let grid = WordSearch { data: grid };
@@ -217,13 +218,16 @@ impl WordSearch {
     }
 }
 
+#[instrument(skip(input), level = "debug")]
 fn part2(input: &str) -> usize {
     let grid = input.parse::<Grid<char>>().unwrap();
     let grid = WordSearch { data: grid };
     grid.count_x_mas()
 }
 
-aoc_macro::aoc_main!();
+fn main() {
+    solutions::main(part1, part2)
+}
 
 #[cfg(test)]
 mod tests {

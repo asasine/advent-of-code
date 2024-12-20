@@ -11,8 +11,9 @@ use std::{
 
 use itertools::Itertools;
 use solutions::grid::{Coordinate, Grid};
-use tracing::trace;
+use tracing::{instrument, trace};
 
+#[instrument(skip(input), level = "debug")]
 fn part1(input: &str) -> u64 {
     part1_impl::<71>(input, 1024)
 }
@@ -36,6 +37,7 @@ fn part1_impl<const SIZE: usize>(input: &str, steps: usize) -> u64 {
         .expect("Should have found a path to the target")
 }
 
+#[instrument(skip(input), level = "debug")]
 fn part2(input: &str) -> String {
     part2_impl::<71>(input)
 }
@@ -52,7 +54,9 @@ fn part2_impl<const SIZE: usize>(input: &str) -> String {
     format!("{},{}", blocking_byte.x, blocking_byte.y)
 }
 
-aoc_macro::aoc_main!();
+fn main() {
+    solutions::main(part1, part2)
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Cell {

@@ -10,8 +10,9 @@ use std::{
 
 use itertools::Itertools;
 use solutions::grid::{Coordinate, Direction, Grid};
-use tracing::debug;
+use tracing::{debug, instrument};
 
+#[instrument(skip(input), level = "debug")]
 fn part1(input: &str) -> usize {
     let maze = Maze::from_str(input).unwrap();
     let graph = Graph::from(&maze);
@@ -25,6 +26,7 @@ fn part1(input: &str) -> usize {
     cost
 }
 
+#[instrument(skip(input), level = "debug")]
 fn part2(input: &str) -> usize {
     let maze = Maze::from_str(input).unwrap();
     let graph = Graph::from(&maze);
@@ -37,7 +39,9 @@ fn part2(input: &str) -> usize {
         .count()
 }
 
-aoc_macro::aoc_main!();
+fn main() {
+    solutions::main(part1, part2)
+}
 
 enum Cell {
     Start,

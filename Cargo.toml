@@ -1,4 +1,4 @@
 [workspace]
-members = ["aoc-macro", "runner", "solutions"]
+members = ["runner", "solutions"]
 
 resolver = "2"

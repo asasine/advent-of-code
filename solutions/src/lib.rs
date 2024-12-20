@@ -1,6 +1,13 @@
 //! Solutions to the Advent of Code puzzles.
 
+use core::fmt;
+use std::io::IsTerminal;
+use tracing::{instrument, subscriber, Level};
+use tracing_subscriber::fmt::format::FmtSpan;
+use tracing_subscriber::FmtSubscriber;
+
 /// Reads the entire stdin into a [`String`].
+#[instrument(level = "debug")]
 pub fn read_stdin() -> String {
     use std::io::Read;
     let mut input = String::new();
@@ -15,21 +22,33 @@ pub fn read_stdin() -> String {
 /// Sets up the tracing subscriber for logging.
 pub fn setup_tracing() {
     let max_level = if cfg!(debug_assertions) {
-        ::tracing::Level::TRACE
+        Level::TRACE
     } else {
-        ::tracing::Level::DEBUG
+        Level::DEBUG
     };
 
-    use ::std::io::IsTerminal;
-    let subscriber = ::tracing_subscriber::FmtSubscriber::builder()
+    let subscriber = FmtSubscriber::builder()
         .with_max_level(max_level)
-        .with_ansi(::std::io::stderr().is_terminal())
-        .with_writer(::std::io::stderr)
+        .with_ansi(std::io::stderr().is_terminal())
+        .with_writer(std::io::stderr)
         .with_target(false)
+        .with_span_events(FmtSpan::FULL)
         .finish();
 
-    ::tracing::subscriber::set_global_default(subscriber)
-        .expect("setting default subscriber failed");
+    subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
+}
+
+pub fn main<F1, F2, R1, R2>(part1: F1, part2: F2)
+where
+    F1: Fn(&str) -> R1,
+    R1: fmt::Display,
+    F2: Fn(&str) -> R2,
+    R2: fmt::Display,
+{
+    setup_tracing();
+    let input = read_stdin();
+    println!("{}", part1(&input));
+    println!("{}", part2(&input));
 }
 
 pub mod grid;

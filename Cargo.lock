@@ -76,17 +76,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "aoc-macro"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "approx"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -505,7 +494,6 @@ checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 name = "solutions"
 version = "0.1.0"
 dependencies = [
- "aoc-macro",
  "itertools",
  "nalgebra",
  "regex",

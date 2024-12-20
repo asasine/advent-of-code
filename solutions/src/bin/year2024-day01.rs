@@ -3,8 +3,10 @@
 //! https://adventofcode.com/2024/day/1
 
 use std::collections::HashMap;
+use tracing::instrument;
 
-pub fn part1(input: &str) -> usize {
+#[instrument(skip(input), level = "debug")]
+fn part1(input: &str) -> usize {
     let mut lists: [Vec<i64>; 2] = [Vec::new(), Vec::new()];
     for line in input.lines() {
         for (i, n) in line.split_whitespace().enumerate() {
@@ -18,7 +20,8 @@ pub fn part1(input: &str) -> usize {
         .sum()
 }
 
-pub fn part2(input: &str) -> usize {
+#[instrument(skip(input), level = "debug")]
+fn part2(input: &str) -> usize {
     let mut left: Vec<usize> = Vec::new();
     let mut right: HashMap<usize, usize> = HashMap::new();
     for line in input.lines() {
@@ -42,7 +45,9 @@ pub fn part2(input: &str) -> usize {
     left.iter().map(|n| n * right.get(n).unwrap_or(&0)).sum()
 }
 
-aoc_macro::aoc_main!();
+fn main() {
+    solutions::main(part1, part2)
+}
 
 #[cfg(test)]
 mod tests {

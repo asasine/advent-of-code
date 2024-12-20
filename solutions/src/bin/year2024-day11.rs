@@ -4,17 +4,23 @@
 
 use std::{collections::HashMap, hash::Hash, str::FromStr};
 
+use tracing::instrument;
+
+#[instrument(skip(input), level = "debug")]
 fn part1(input: &str) -> usize {
     let mut stones = Stones::from_str(input).unwrap();
     stones.blink_for(25)
 }
 
+#[instrument(skip(input), level = "debug")]
 fn part2(input: &str) -> usize {
     let mut stones = Stones::from_str(input).unwrap();
     stones.blink_for(75)
 }
 
-aoc_macro::aoc_main!();
+fn main() {
+    solutions::main(part1, part2)
+}
 
 /// Returns the two parts of a number split in the middle if it has an even number of digits, or [`None`] if it has odd digits.
 ///

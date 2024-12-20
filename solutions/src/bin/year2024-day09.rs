@@ -6,14 +6,16 @@ use core::fmt;
 use std::{collections::HashSet, str::FromStr};
 
 use itertools::Itertools;
-use tracing::trace;
+use tracing::{instrument, trace};
 
+#[instrument(skip(input), level = "debug")]
 fn part1(input: &str) -> usize {
     let dense = DenseDiskMap::from_str(input).unwrap();
     let defragmented = dense.sparse_defragment();
     defragmented.checksum()
 }
 
+#[instrument(skip(input), level = "debug")]
 fn part2(input: &str) -> usize {
     let dense = DenseDiskMap::from_str(input).unwrap();
     let defragmented = dense.dense_defragment();
@@ -275,7 +277,9 @@ impl fmt::Display for DenseDiskMap {
     }
 }
 
-aoc_macro::aoc_main!();
+fn main() {
+    solutions::main(part1, part2)
+}
 
 #[cfg(test)]
 mod tests {

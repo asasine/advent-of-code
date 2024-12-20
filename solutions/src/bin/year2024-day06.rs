@@ -6,8 +6,9 @@ use core::fmt;
 use std::collections::{HashMap, HashSet};
 
 use solutions::grid::Direction;
-use tracing::debug;
+use tracing::{debug, instrument};
 
+#[instrument(skip(input), level = "debug")]
 fn part1(input: &str) -> usize {
     part1_impl::<130>(input)
 }
@@ -288,6 +289,7 @@ impl<const N: usize> fmt::Display for VisitedGrid<N> {
     }
 }
 
+#[instrument(skip(input), level = "debug")]
 fn part2(input: &str) -> usize {
     part2_impl::<130>(input)
 }
@@ -317,7 +319,9 @@ fn part2_impl<const N: usize>(input: &str) -> usize {
     looping_obstructions.len()
 }
 
-aoc_macro::aoc_main!();
+fn main() {
+    solutions::main(part1, part2)
+}
 
 #[cfg(test)]
 mod tests {

@@ -4,7 +4,9 @@
 
 use itertools::FoldWhile::{Continue, Done};
 use itertools::Itertools;
+use tracing::instrument;
 
+#[instrument(skip(input), level = "debug")]
 fn part1(input: &str) -> isize {
     input.chars().fold(0, |floor, c| match c {
         '(' => floor + 1,
@@ -13,6 +15,7 @@ fn part1(input: &str) -> isize {
     })
 }
 
+#[instrument(skip(input), level = "debug")]
 fn part2(input: &str) -> usize {
     input
         .chars()
@@ -63,7 +66,9 @@ impl Acc {
     }
 }
 
-aoc_macro::aoc_main!();
+fn main() {
+    solutions::main(part1, part2)
+}
 
 #[cfg(test)]
 mod tests {

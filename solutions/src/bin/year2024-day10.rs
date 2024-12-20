@@ -5,7 +5,9 @@
 use std::{collections::HashSet, str::FromStr};
 
 use solutions::grid::{Coordinate, Grid};
+use tracing::instrument;
 
+#[instrument(skip(input), level = "debug")]
 fn part1(input: &str) -> usize {
     let grid = Grid::<Cell>::from_str(input).unwrap();
     let guide = LavaIslandHikingGuide { grid };
@@ -23,6 +25,7 @@ fn part1(input: &str) -> usize {
     trailheads.map(|c| guide.find_score(c)).sum()
 }
 
+#[instrument(skip(input), level = "debug")]
 fn part2(input: &str) -> usize {
     let grid = Grid::<Cell>::from_str(input).unwrap();
     let guide = LavaIslandHikingGuide { grid };
@@ -40,7 +43,9 @@ fn part2(input: &str) -> usize {
     trailheads.map(|c| guide.find_rating(c)).sum()
 }
 
-aoc_macro::aoc_main!();
+fn main() {
+    solutions::main(part1, part2)
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum Cell {

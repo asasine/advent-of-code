@@ -100,6 +100,12 @@ impl Coordinate {
                 .and_then(|c| c.try_move_within(Direction::Up, extents)),
         ]
     }
+
+    /// The Manhattan distance between two coordinates.
+    pub fn manhattan(&self, other: Coordinate) -> usize {
+        (self.x as isize - other.x as isize).abs() as usize
+            + (self.y as isize - other.y as isize).abs() as usize
+    }
 }
 
 impl fmt::Display for Coordinate {
@@ -475,6 +481,15 @@ mod tests {
             assert_eq!(neighbors[5], None);
             assert_eq!(neighbors[6], Some(Coordinate { x: 1, y: 2 }));
             assert_eq!(neighbors[7], Some(Coordinate { x: 1, y: 1 }));
+        }
+
+        #[test]
+        fn manhattan() {
+            let c1 = Coordinate { x: 0, y: 0 };
+            let c2 = Coordinate { x: 3, y: 4 };
+
+            assert_eq!(c1.manhattan(c2), 7);
+            assert_eq!(c2.manhattan(c1), 7);
         }
     }
 

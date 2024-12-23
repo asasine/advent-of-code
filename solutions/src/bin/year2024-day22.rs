@@ -3,29 +3,56 @@
 //! https://adventofcode.com/2024/day/22
 
 use core::fmt;
-use std::{
-    collections::{HashMap, HashSet},
-    str::FromStr,
-};
+use std::str::FromStr;
 
 use itertools::Itertools;
-use tracing::{debug, instrument, trace};
+use tracing::instrument;
 
 #[instrument(skip(input), level = "debug")]
 fn part1(input: &str) -> u64 {
     input
-        .parse::<SecretNumbers>()
-        .unwrap()
-        .numbers
-        .into_iter()
-        .map(|n| n.evolve_n(2000).0 as u64)
+        .lines()
+        .map(SecretNumber::from_str)
+        .flatten()
+        .map(|sn| sn.evolve_n(2000).0 as u64)
         .sum()
 }
 
 #[instrument(skip(input), level = "debug")]
 fn part2(input: &str) -> u64 {
-    let secret_numbers: SecretNumbers = input.parse().unwrap();
-    secret_numbers.find_best_price_change(2000)
+    // There are 19^4 = 130321 possible sequences of 4 changes in the range [-9, 9].
+    let mut sequence_totals = vec![0; 19 * 19 * 19 * 19];
+    let mut seen_sequences = vec![0; 19 * 19 * 19 * 19];
+    let mut buyer = 0;
+    for line in input.lines() {
+        let mut secret_number = line.parse::<SecretNumber>().unwrap();
+        let mut prices = [0; 2000];
+        let mut deltas = [0; 2000];
+        for (price, delta) in prices.iter_mut().zip(deltas.iter_mut()) {
+            let next = secret_number.evolve();
+            *price = next.price();
+            *delta = next.price() - secret_number.price();
+            secret_number = next;
+        }
+
+        let base19_indices = deltas
+            .iter()
+            .tuple_windows()
+            .map(|(&a, &b, &c, &d)| base19(&[a, b, c, d]));
+
+        for (i, price) in base19_indices.zip(prices.iter().skip(3)) {
+            let sequence_total = &mut sequence_totals[i];
+            let seen_sequence = &mut seen_sequences[i];
+            if *seen_sequence != buyer {
+                *seen_sequence = buyer;
+                *sequence_total += *price as u64;
+            }
+        }
+
+        buyer += 1;
+    }
+
+    *sequence_totals.iter().max().unwrap()
 }
 
 fn main() {
@@ -51,7 +78,7 @@ impl SecretNumber {
         Self(x as u32)
     }
 
-    /// Gets the secret number after evolving `snteps` times.
+    /// Gets the secret number after evolving `n` times.
     fn evolve_n(self, n: usize) -> Self {
         self.evolutions(n).last().unwrap()
     }
@@ -70,28 +97,6 @@ impl SecretNumber {
     fn price(&self) -> i8 {
         (self.0 % 10) as i8
     }
-
-    /// Gets the price change sequences of the secret number evolutions, along with the number of bananas.
-    fn price_changes(&self, n: usize) -> impl Iterator<Item = ([i8; 4], i8)> {
-        self.numbers(n).tuple_windows().map(|(a, b, c, d, e)| {
-            let changes = [
-                (b.price() - a.price()),
-                (c.price() - b.price()),
-                (d.price() - c.price()),
-                (e.price() - d.price()),
-            ];
-
-            (changes, e.price())
-        })
-    }
-
-    /// Evaluates a sequence of price changes and returns the number of bananas that would be sold with it, or [`None`]
-    /// if no bananas would be sold.
-    fn evaluate(&self, n: usize, price_changes: &[i8; 4]) -> Option<i8> {
-        self.price_changes(n)
-            .find(|(changes, _)| changes == price_changes)
-            .map(|(_, price)| price)
-    }
 }
 
 impl FromStr for SecretNumber {
@@ -107,58 +112,13 @@ impl fmt::Display for SecretNumber {
     }
 }
 
-struct SecretNumbers {
-    numbers: Vec<SecretNumber>,
-}
-
-impl SecretNumbers {
-    /// Finds the best price change sequence that would result in the most bananas sold across all secret numbers.
-    /// Returns the number of bananas sold.
-    fn find_best_price_change(&self, n: usize) -> u64 {
-        let price_changes = self
-            .numbers
-            .iter()
-            .map(|&sn| sn.price_changes(n))
-            .flatten()
-            .map(|(changes, _)| changes)
-            .collect::<HashSet<_>>();
-
-        price_changes
-            .iter()
-            .enumerate()
-            .map(|(i, pc)| {
-                trace!(
-                    "Evaluating price change sequence {} of {}",
-                    i + 1,
-                    price_changes.len()
-                );
-
-                self.evaluate(n, pc)
-            })
-            .max()
-            .unwrap_or_default()
+fn base19(changes: &[i8; 4]) -> usize {
+    let mut x = 0;
+    for &c in changes {
+        x = x * 19 + (c + 9) as usize;
     }
 
-    fn evaluate(&self, n: usize, price_changes: &[i8; 4]) -> u64 {
-        self.numbers
-            .iter()
-            .filter_map(|&sn| sn.evaluate(n, price_changes))
-            .map(|x| x as u64)
-            .sum()
-    }
-}
-
-impl FromStr for SecretNumbers {
-    type Err = <u32 as FromStr>::Err;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self {
-            numbers: s
-                .lines()
-                .map(SecretNumber::from_str)
-                .map(Result::unwrap)
-                .collect(),
-        })
-    }
+    x
 }
 
 #[cfg(test)]
@@ -191,14 +151,5 @@ mod tests {
         assert_eq!(3, SecretNumber(123).price());
         assert_eq!(0, SecretNumber(15887950).price());
         assert_eq!(6, SecretNumber(16495136).price());
-    }
-
-    #[test]
-    fn evaluate() {
-        assert_eq!(Some(6), SecretNumber(123).evaluate(10, &[-1, -1, 0, 2]));
-        assert_eq!(Some(7), SecretNumber(1).evaluate(2000, &[-2, 1, -1, 3]));
-        assert_eq!(Some(7), SecretNumber(2).evaluate(2000, &[-2, 1, -1, 3]));
-        assert_eq!(None, SecretNumber(3).evaluate(2000, &[-2, 1, -1, 3]));
-        assert_eq!(Some(9), SecretNumber(2024).evaluate(2000, &[-2, 1, -1, 3]));
     }
 }

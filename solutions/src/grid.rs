@@ -103,8 +103,8 @@ impl Coordinate {
 
     /// The Manhattan distance between two coordinates.
     pub fn manhattan(&self, other: Coordinate) -> usize {
-        (self.x as isize - other.x as isize).abs() as usize
-            + (self.y as isize - other.y as isize).abs() as usize
+        (self.x as isize - other.x as isize).unsigned_abs()
+            + (self.y as isize - other.y as isize).unsigned_abs()
     }
 }
 

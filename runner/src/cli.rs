@@ -178,7 +178,7 @@ impl DailyArgs {
 //!
 //! https://adventofcode.com/{year}/day/{day}
 
-import tracing::instrument;
+use tracing::instrument;
 
 #[instrument(skip(input), level = "debug")]
 fn part1(input: &str) -> usize {{
@@ -200,14 +200,12 @@ mod tests {{
 
     #[test]
     fn part1_example() {{
-        solutions::setup_tracing();
         let input = include_str!("{example_input_include_str}");
         assert_eq!(0, part1(input));
     }}
 
     #[test]
     fn part2_example() {{
-        solutions::setup_tracing();
         let input = include_str!("{example_input_include_str}");
         assert_eq!(0, part2(input));
     }}

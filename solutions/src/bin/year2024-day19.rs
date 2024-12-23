@@ -36,14 +36,14 @@ fn part2(input: &str) -> usize {
 
     let designs = lines.map(str::trim);
     let mut cache = HashMap::new();
-    let count = designs
+    
+
+    designs
         .map(|design| {
             trace!("Checking design: {}", design);
             dfs(design, &patterns, &mut cache)
         })
-        .sum();
-
-    count
+        .sum()
 }
 
 fn dfs<'a>(line: &'a str, patterns: &[&str], cache: &mut HashMap<&'a str, usize>) -> usize {

@@ -32,7 +32,7 @@ pub fn setup_tracing() {
         .with_ansi(std::io::stderr().is_terminal())
         .with_writer(std::io::stderr)
         .with_target(false)
-        .with_span_events(FmtSpan::FULL)
+        .with_span_events(FmtSpan::ENTER | FmtSpan::CLOSE)
         .finish();
 
     subscriber::set_global_default(subscriber).expect("setting default subscriber failed");

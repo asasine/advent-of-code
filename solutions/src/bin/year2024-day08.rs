@@ -89,13 +89,13 @@ struct Antinodes<'a> {
     city: &'a City,
 }
 
-impl<'a> Antinodes<'a> {
+impl Antinodes<'_> {
     fn distinct_in_bounds(&self) -> HashSet<Point2i> {
         self.antinodes.iter().map(|a| a.location).collect()
     }
 }
 
-impl<'a> fmt::Display for Antinodes<'a> {
+impl fmt::Display for Antinodes<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let locations = self.distinct_in_bounds();
         let mut prev_y = None;

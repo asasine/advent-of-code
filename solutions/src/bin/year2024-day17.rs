@@ -107,7 +107,7 @@ impl ChronospatialComputer {
                         continue; // don't increment the instruction pointer
                     }
                 }
-                Opcode::Bxc => registers.b = registers.b ^ registers.c,
+                Opcode::Bxc => registers.b ^= registers.c,
                 Opcode::Out => {
                     *instruction_pointer += 2;
                     return Some((operand.combo(registers) & 0b111) as u8);
@@ -221,7 +221,7 @@ impl Operand {
             5 => registers.b,
             6 => registers.c,
             7 => panic!("7 is reserved and should not appear as a combo operand in valid programs"),
-            x @ _ => unreachable!("not a 3-bit operand: {}", x),
+            x => unreachable!("not a 3-bit operand: {}", x),
         }
     }
 }
@@ -277,7 +277,7 @@ impl TryFrom<u8> for Opcode {
             5 => Ok(Self::Out),
             6 => Ok(Self::Bdv),
             7 => Ok(Self::Cdv),
-            x @ _ => Err(x),
+            x => Err(x),
         }
     }
 }

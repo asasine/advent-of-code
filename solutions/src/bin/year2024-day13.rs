@@ -135,7 +135,7 @@ impl<'a> MachinesParser<'a> {
     }
 }
 
-impl<'a> Iterator for MachinesParser<'a> {
+impl Iterator for MachinesParser<'_> {
     type Item = Machine;
     fn next(&mut self) -> Option<Self::Item> {
         self.split.next().and_then(|s| s.parse().ok())

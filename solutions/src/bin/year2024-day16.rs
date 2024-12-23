@@ -149,9 +149,9 @@ impl From<&Maze> for Graph {
                             source: node,
                             target: Node {
                                 coordinate: neighbor,
-                                direction: direction,
+                                direction,
                             },
-                            cost: cost,
+                            cost,
                         })
                 });
 

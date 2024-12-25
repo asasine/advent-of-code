@@ -12,8 +12,7 @@ use tracing::instrument;
 fn part1(input: &str) -> u64 {
     input
         .lines()
-        .map(SecretNumber::from_str)
-        .flatten()
+        .flat_map(SecretNumber::from_str)
         .map(|sn| sn.evolve_n(2000).0 as u64)
         .sum()
 }
@@ -23,8 +22,7 @@ fn part2(input: &str) -> u64 {
     // There are 19^4 = 130321 possible sequences of 4 changes in the range [-9, 9].
     let mut sequence_totals = vec![0; 19 * 19 * 19 * 19];
     let mut seen_sequences = vec![0; 19 * 19 * 19 * 19];
-    let mut buyer = 0;
-    for line in input.lines() {
+    for (buyer, line) in input.lines().enumerate() {
         let mut secret_number = line.parse::<SecretNumber>().unwrap();
         let mut prices = [0; 2000];
         let mut deltas = [0; 2000];
@@ -48,8 +46,6 @@ fn part2(input: &str) -> u64 {
                 *sequence_total += *price as u64;
             }
         }
-
-        buyer += 1;
     }
 
     *sequence_totals.iter().max().unwrap()

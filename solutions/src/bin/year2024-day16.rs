@@ -201,7 +201,7 @@ impl Graph {
     fn shortest_paths(&self, source: Node, destination: Coordinate) -> (usize, Vec<Vec<Node>>) {
         // Track the best paths to the destination.
         let mut paths = Vec::new();
-        let mut best = std::usize::MAX;
+        let mut best = usize::MAX;
 
         // Track the nodes we've visited and the cost to get there.
         let mut visited = HashMap::new();

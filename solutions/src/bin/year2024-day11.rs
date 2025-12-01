@@ -28,7 +28,7 @@ fn main() {
 /// Any leading zeros in the second part are stripped.
 fn split_number(n: u64) -> Option<(u64, u64)> {
     let d = solutions::num::u64::digits(n);
-    if d % 2 == 0 {
+    if d.is_multiple_of(2) {
         let b = 10u64.pow(d / 2);
         Some((n / b, n % b))
     } else {

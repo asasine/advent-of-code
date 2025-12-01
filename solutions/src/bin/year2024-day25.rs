@@ -18,8 +18,8 @@ fn part1(input: &str) -> usize {
         .count()
 }
 
-#[instrument(skip(input), level = "debug")]
-fn part2(input: &str) -> usize {
+#[instrument(level = "debug")]
+fn part2(_: &str) -> usize {
     0
 }
 

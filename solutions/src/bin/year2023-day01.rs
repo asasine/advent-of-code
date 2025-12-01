@@ -61,7 +61,7 @@ fn part2(input: &str) -> usize {
                     let remaining = &line[i..];
                     re.find(remaining).map(|m| match_to_digit(&m))
                 })
-                .last()
+                .next_back()
                 .unwrap_or(first);
 
             first * 10 + last

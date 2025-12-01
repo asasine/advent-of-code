@@ -95,13 +95,13 @@ impl WarehouseGrid {
                 // a robot can move if the next cell can [recursively] move
                 coordinate
                     .try_move(direction)
-                    .map_or(false, |coord| self.can_move(coord, direction))
+                    .is_some_and(|coord| self.can_move(coord, direction))
             }
             Cell::Box => {
                 // a box can move if the next cell can [recursively] move
                 coordinate
                     .try_move(direction)
-                    .map_or(false, |coord| self.can_move(coord, direction))
+                    .is_some_and(|coord| self.can_move(coord, direction))
             }
             Cell::LeftBox => {
                 // if moving vertically, a left box can move if the next cell can [recursively] move and the cell to the right can [recursively] move
@@ -110,12 +110,12 @@ impl WarehouseGrid {
                     let left = coordinate.try_move(direction);
                     let right = left.and_then(|c| c.try_move(Direction::Right));
 
-                    left.map_or(false, |coord| self.can_move(coord, direction))
-                        && right.map_or(false, |coord| self.can_move(coord, direction))
+                    left.is_some_and(|coord| self.can_move(coord, direction))
+                        && right.is_some_and(|coord| self.can_move(coord, direction))
                 } else {
                     coordinate
                         .try_move(direction)
-                        .map_or(false, |coord| self.can_move(coord, direction))
+                        .is_some_and(|coord| self.can_move(coord, direction))
                 }
             }
             Cell::RightBox => {
@@ -124,12 +124,12 @@ impl WarehouseGrid {
                 if direction.is_vertical() {
                     let right = coordinate.try_move(direction);
                     let left = right.and_then(|c| c.try_move(Direction::Left));
-                    right.map_or(false, |coord| self.can_move(coord, direction))
-                        && left.map_or(false, |coord| self.can_move(coord, direction))
+                    right.is_some_and(|coord| self.can_move(coord, direction))
+                        && left.is_some_and(|coord| self.can_move(coord, direction))
                 } else {
                     coordinate
                         .try_move(direction)
-                        .map_or(false, |coord| self.can_move(coord, direction))
+                        .is_some_and(|coord| self.can_move(coord, direction))
                 }
             }
             Cell::Empty => {

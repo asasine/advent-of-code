@@ -70,12 +70,11 @@ fn part2(input: &str) -> String {
         }
 
         // all XORs should have two inputs that are x or y, or an output that is a z
-        if gate.op == GateOperation::Xor {
-            if !(gate.a.is_xy() && gate.b.is_xy()) && !gate.output.is_z() {
+        if gate.op == GateOperation::Xor
+            && !(gate.a.is_xy() && gate.b.is_xy()) && !gate.output.is_z() {
                 trace!("Invalid XOR error: {}", gate);
                 errors.insert(gate.output);
             }
-        }
 
         // all AND outputs should go to OR inputs, except for LSB
         match gate.op {
@@ -266,7 +265,7 @@ impl GatesAndWires {
                 .initials
                 .0
                 .iter()
-                .map(|wire| (wire.id, wire.clone()))
+                .map(|wire| (wire.id, *wire))
                 .collect(),
             gate_by_output: self
                 .gates
@@ -280,7 +279,7 @@ impl GatesAndWires {
             .map(|gate| gate.output)
             .filter(|id| id.is_z())
             .map(|id| (solver.evaluate(id) as u64) << id.gate_number())
-            .fold(0, |acc, x| acc | x as u64)
+            .fold(0, |acc, x| acc | x)
     }
 }
 
@@ -310,7 +309,7 @@ impl fmt::Display for GatesAndWires {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Initials:")?;
         write!(f, "{}", self.initials)?;
-        writeln!(f, "")?;
+        writeln!(f)?;
         for gate in &self.gates {
             writeln!(f, "{}", gate)?;
         }

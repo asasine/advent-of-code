@@ -5,8 +5,8 @@ edition = "2024"
 description = "Solutions to the Advent of Code"
 
 [dependencies]
-itertools = "0.13.0"
-nalgebra = "0.33.2"
-regex = "1.11.1"
-tracing = "0.1.41"
-tracing-subscriber = "0.3.19"
+itertools = "0.14.0"
+nalgebra = "0.34.1"
+regex = "1.12.2"
+tracing = "0.1.43"
+tracing-subscriber = "0.3.22"

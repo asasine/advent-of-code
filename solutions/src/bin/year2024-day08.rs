@@ -156,7 +156,7 @@ impl City {
         self.grid.get(c)
     }
 
-    fn get_first_antinodes(&self) -> Antinodes {
+    fn get_first_antinodes(&self) -> Antinodes<'_> {
         let mut antinodes = HashSet::new();
 
         // for every pair of antennas with the same frequency, get the location of the cell that's collinear with them.
@@ -164,11 +164,7 @@ impl City {
             for (a, b) in locations.iter().tuple_combinations() {
                 let delta = {
                     let delta = a - b;
-                    if a + delta == *b {
-                        -delta
-                    } else {
-                        delta
-                    }
+                    if a + delta == *b { -delta } else { delta }
                 };
 
                 let locations = [a + delta, b - delta];
@@ -188,7 +184,7 @@ impl City {
         }
     }
 
-    fn get_all_antinodes(&self) -> Antinodes {
+    fn get_all_antinodes(&self) -> Antinodes<'_> {
         let mut antinodes = HashSet::new();
 
         // for every pair of antennas with the same frequency, get the location of the cells that are collinear with them and in the grid's bounds.
@@ -196,11 +192,7 @@ impl City {
             for (a, b) in locations.iter().tuple_combinations() {
                 let delta = {
                     let delta = a - b;
-                    if a + delta == *b {
-                        -delta
-                    } else {
-                        delta
-                    }
+                    if a + delta == *b { -delta } else { delta }
                 };
 
                 let locations = std::iter::successors(Some(*a), |&p| {

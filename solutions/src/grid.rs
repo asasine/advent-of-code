@@ -320,7 +320,7 @@ impl<T> Grid<T> {
     }
 
     /// Enumerate the cells in the grid.
-    pub fn enumerate(&self) -> GridEnumerateIterator<T> {
+    pub fn enumerate(&self) -> GridEnumerateIterator<'_, T> {
         GridEnumerateIterator {
             grid: self,
             rect_iter: self.extent.into_iter(),

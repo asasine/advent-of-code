@@ -34,7 +34,7 @@ impl WordSearch {
         // For starters, we know that every `X-MAS` pattern must have an `A` in the middle, so we can start our searches there.
         self.data
             .enumerate()
-            .filter(|(_, &c)| c == 'A')
+            .filter(|(_, c)| **c == 'A')
             .filter(|(c, _)| self.is_x_mas(*c))
             .count()
     }
@@ -87,7 +87,7 @@ impl WordSearch {
 
         self.data
             .enumerate()
-            .filter(|(_, &c)| c == first_letter)
+            .filter(|(_, c)| **c == first_letter)
             .map(|(coordinate, _)| {
                 trace!("{coordinate}");
                 self.count_words_at(word, coordinate)

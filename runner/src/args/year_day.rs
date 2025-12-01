@@ -6,6 +6,9 @@ use crate::{
 use clap::{error::ErrorKind, CommandFactory};
 
 #[derive(clap::Args, Default)]
+// Clap will give an "Argument group name must be unique" panic if two structs named `Args` are used in a single `#[derive(clap::Args)]`
+// so we need to assign an explicit unique ID to this group.
+#[group(id = module_path!())]
 pub struct Args {
     /// The year of the challenge.
     ///

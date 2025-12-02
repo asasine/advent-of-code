@@ -108,6 +108,8 @@ mod tests {{
         std::fs::write(&destination, contents)
             .map_err(|e| Cli::command().error(ErrorKind::Io, e))?;
 
+        eprintln!("Wrote to {}", destination.display());
+
         Ok(ExitCode::SUCCESS)
     }
 }

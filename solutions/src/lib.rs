@@ -2,9 +2,8 @@
 
 use core::fmt;
 use std::io::IsTerminal;
-use tracing::{instrument, subscriber, Level};
-use tracing_subscriber::fmt::format::FmtSpan;
-use tracing_subscriber::FmtSubscriber;
+use tracing::{Level, instrument, subscriber};
+use tracing_subscriber::{FmtSubscriber, fmt::format::FmtSpan};
 
 /// Reads the entire stdin into a [`String`].
 #[instrument(level = "debug")]

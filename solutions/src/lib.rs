@@ -50,7 +50,9 @@ where
     println!("{}", part2(&input));
 }
 
+pub mod cmp;
 pub mod grid;
+pub mod iter;
 
 pub mod num {
     //! Utilities for working with numbers.

@@ -1,5 +1,4 @@
 use crate::{
-    is_aoc_event_for,
     types::{Day, Year, YearDay},
     Cli,
 };
@@ -23,25 +22,15 @@ pub struct Args {
 
 impl Args {
     pub fn year(&self) -> Result<Year, &str> {
-        self.year.map_or_else(|| {
-            let now = chrono::Local::now();
-            if is_aoc_event_for(now) {
-                Ok(now.into())
-            } else {
-                Err("the year is required if the current date is not during the Advent of Code event")
-            }
-        }, Ok)
+        self.year.or_else(Year::now_if_during_event).ok_or(
+            "the year is required if the current date is not during the Advent of Code event",
+        )
     }
 
     pub fn day(&self) -> Result<Day, &str> {
-        self.day.map_or_else(|| {
-            let now = chrono::Local::now();
-            if is_aoc_event_for(now) {
-                Ok(now.into())
-            } else {
-                Err("the day is required if the current date is not during the Advent of Code event")
-            }
-        }, Ok)
+        self.day
+            .or_else(Day::now_if_during_event)
+            .ok_or("the day is required if the current date is not during the Advent of Code event")
     }
 
     pub fn validate(&self) -> Result<YearDay, clap::Error> {

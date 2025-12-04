@@ -3,14 +3,24 @@ use std::str::FromStr;
 
 use chrono::{DateTime, Datelike, NaiveDate, NaiveDateTime, TimeZone};
 
+use crate::datetime::{is_aoc_event_for, last_event_day_for, now, now_if_during_event};
+
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Year(pub u16);
 
+impl Year {
+    /// Returns the current year if during the Advent of Code event, otherwise returns [`None`].
+    pub fn now_if_during_event() -> Option<Self> {
+        now_if_during_event().map(Self::from)
+    }
+}
+
 impl Default for Year {
+    /// Returns the current year if in December in the US Eastern time zone, otherwise returns the previous year.
     fn default() -> Self {
-        let now = chrono::Local::now();
+        let now = now();
         let year = now.year();
-        if now.month() == 12 {
+        if is_aoc_event_for(&now) {
             Self(year as u16)
         } else {
             Self(year as u16 - 1)
@@ -53,14 +63,25 @@ impl<T: TimeZone> From<DateTime<T>> for Year {
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Day(pub u8);
 
+impl Day {
+    /// Returns the current day if during the Advent of Code event, otherwise returns [`None`].
+    pub fn now_if_during_event() -> Option<Self> {
+        now_if_during_event().map(Self::from)
+    }
+}
+
 impl Default for Day {
+    /// Returns the current day if in December in the US Eastern time zone, otherwise returns the last day of the event
+    /// for the current year.
+    ///
+    /// See [`Year::default`] for details on how the default year is determined.
     fn default() -> Self {
-        let now = chrono::Local::now();
+        let now = now();
         let day = now.day();
-        if now.month() == 12 {
+        if is_aoc_event_for(&now) {
             Self(day as u8)
         } else {
-            Self(25)
+            Self(last_event_day_for(now.year() as u16))
         }
     }
 }

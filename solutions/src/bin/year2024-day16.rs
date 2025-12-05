@@ -129,7 +129,7 @@ impl From<&Maze> for Graph {
                 continue;
             }
 
-            for direction in Direction::all() {
+            for direction in Direction::ALL {
                 let node = Node {
                     coordinate,
                     direction,

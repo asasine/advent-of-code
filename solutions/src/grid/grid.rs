@@ -71,8 +71,8 @@ impl<T> Grid<T> {
     /// Create a new grid from a vector of cells.
     pub fn new(cells: Vec<Vec<T>>) -> Self {
         let extent = Rectangle {
-            min: Coordinate { x: 0, y: 0 },
-            max: Coordinate {
+            a: Coordinate { x: 0, y: 0 },
+            b: Coordinate {
                 x: cells[0].len() - 1,
                 y: cells.len() - 1,
             },
@@ -177,8 +177,8 @@ mod tests {
         assert_eq!(
             grid.extent(),
             Rectangle {
-                min: Coordinate { x: 0, y: 0 },
-                max: Coordinate { x: 2, y: 2 },
+                a: Coordinate { x: 0, y: 0 },
+                b: Coordinate { x: 2, y: 2 },
             }
         );
     }

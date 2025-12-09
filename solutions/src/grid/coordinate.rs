@@ -132,8 +132,8 @@ mod tests {
     #[test]
     fn test_try_move_within() {
         let rect = Rectangle {
-            min: Coordinate { x: 0, y: 0 },
-            max: Coordinate { x: 2, y: 2 },
+            a: Coordinate { x: 0, y: 0 },
+            b: Coordinate { x: 2, y: 2 },
         };
 
         let c = Coordinate { x: 2, y: 2 };
@@ -163,8 +163,8 @@ mod tests {
     #[test]
     fn von_neumann_within() {
         let rect = Rectangle {
-            min: Coordinate { x: 0, y: 0 },
-            max: Coordinate { x: 2, y: 2 },
+            a: Coordinate { x: 0, y: 0 },
+            b: Coordinate { x: 2, y: 2 },
         };
 
         let c = Coordinate { x: 2, y: 2 };
@@ -193,8 +193,8 @@ mod tests {
     #[test]
     fn moore_within() {
         let rect = Rectangle {
-            min: Coordinate { x: 0, y: 0 },
-            max: Coordinate { x: 2, y: 2 },
+            a: Coordinate { x: 0, y: 0 },
+            b: Coordinate { x: 2, y: 2 },
         };
 
         let c = Coordinate { x: 2, y: 2 };

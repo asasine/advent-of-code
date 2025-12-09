@@ -3,24 +3,29 @@ use super::{Coordinate, Direction};
 /// A rectangle defined by two coordinates.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Rectangle {
-    pub min: Coordinate,
-    pub max: Coordinate,
+    pub a: Coordinate,
+    pub b: Coordinate,
 }
 
 impl Rectangle {
     /// Check if a coordinate is within the rectangle.
     pub fn contains(&self, c: Coordinate) -> bool {
-        c.x >= self.min.x && c.x <= self.max.x && c.y >= self.min.y && c.y <= self.max.y
+        c.x >= self.a.x && c.x <= self.b.x && c.y >= self.a.y && c.y <= self.b.y
     }
 
     /// The width of the rectangle.
     pub fn width(&self) -> usize {
-        self.max.x - self.min.x + 1
+        self.b.x.abs_diff(self.a.x) + 1
     }
 
     /// The height of the rectangle.
     pub fn height(&self) -> usize {
-        self.max.y - self.min.y + 1
+        self.b.y.abs_diff(self.a.y) + 1
+    }
+
+    /// The area of the rectangle.
+    pub fn area(&self) -> usize {
+        self.width() * self.height()
     }
 }
 
@@ -31,7 +36,7 @@ impl IntoIterator for Rectangle {
     fn into_iter(self) -> Self::IntoIter {
         RectIterator {
             rect: self,
-            current: Some(self.min),
+            current: Some(self.a),
         }
     }
 }
@@ -51,7 +56,7 @@ impl Iterator for RectIterator {
                 .try_move_within(Direction::Right, self.rect)
                 .or_else(|| {
                     let next = Coordinate {
-                        x: self.rect.min.x,
+                        x: self.rect.a.x,
                         y: current.y + 1,
                     };
 
@@ -74,8 +79,8 @@ mod tests {
     #[test]
     fn test_contains() {
         let rect = Rectangle {
-            min: Coordinate { x: 0, y: 0 },
-            max: Coordinate { x: 2, y: 2 },
+            a: Coordinate { x: 0, y: 0 },
+            b: Coordinate { x: 2, y: 2 },
         };
 
         assert!(rect.contains(Coordinate { x: 0, y: 0 }));
@@ -86,8 +91,8 @@ mod tests {
     #[test]
     fn test_width() {
         let rect = Rectangle {
-            min: Coordinate { x: 0, y: 0 },
-            max: Coordinate { x: 2, y: 2 },
+            a: Coordinate { x: 0, y: 0 },
+            b: Coordinate { x: 2, y: 2 },
         };
 
         assert_eq!(rect.width(), 3);
@@ -96,8 +101,8 @@ mod tests {
     #[test]
     fn test_height() {
         let rect = Rectangle {
-            min: Coordinate { x: 0, y: 0 },
-            max: Coordinate { x: 2, y: 2 },
+            a: Coordinate { x: 0, y: 0 },
+            b: Coordinate { x: 2, y: 2 },
         };
 
         assert_eq!(rect.height(), 3);
@@ -106,8 +111,8 @@ mod tests {
     #[test]
     fn test_into_iter() {
         let rect = Rectangle {
-            min: Coordinate { x: 0, y: 0 },
-            max: Coordinate { x: 1, y: 1 },
+            a: Coordinate { x: 0, y: 0 },
+            b: Coordinate { x: 1, y: 1 },
         };
 
         let mut iter = rect.into_iter();

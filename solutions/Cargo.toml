@@ -10,3 +10,4 @@ nalgebra = "0.34.1"
 regex = "1.12.2"
 tracing = "0.1.43"
 tracing-subscriber = "0.3.22"
+z3 = { version = "0.19.6", features = ["gh-release"] }

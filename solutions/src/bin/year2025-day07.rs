@@ -2,7 +2,7 @@
 //!
 //! https://adventofcode.com/2025/day/7
 
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 
 use solutions::grid::{Coordinate, Direction, Grid};
 use tracing::{instrument, trace};

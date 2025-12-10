@@ -7,6 +7,7 @@ Implementations to solve Advent of Code puzzles https://adventofcode.com/
 ### Prerequisites
 
 1. `cargo install aoc-cli`
+1. Linux: `sudo apt install clang` needed to build the z3 crate.
 
 ### Yearly
 

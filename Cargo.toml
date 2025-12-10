@@ -1,4 +1,4 @@
 [workspace]
-members = ["runner", "solutions"]
+members = ["runner", "solutions", "visualizations/year2025-day09"]
 
 resolver = "2"

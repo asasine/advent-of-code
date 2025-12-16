@@ -40,6 +40,10 @@ impl Args {
         Command::new("aoc")
             .args([
                 "download",
+                "--day",
+                yd.day.to_string().as_str(),
+                "--year",
+                yd.year.to_string().as_str(),
                 "--overwrite",
                 "--input-only",
                 "--input-file",
